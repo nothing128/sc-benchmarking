@@ -1,4 +1,4 @@
-import sys, os, gc
+import sys, os, gc, psutil
 import polars as pl
 from contextlib import contextmanager
 from timeit import default_timer
@@ -75,11 +75,30 @@ class TimerCollection:
                     break
         return ' '.join(parts) if parts else 'less than 1ns'
     
-# endregion
+def print_system_info():
+    cpu_count_physical = psutil.cpu_count(logical=False)
+    cpu_count_logical = psutil.cpu_count(logical=True)
+    
+    mem = psutil.virtual_memory()
+    total_mem_gb = mem.total / (1024 ** 3)
+    available_mem_gb = mem.available / (1024 ** 3)
+    
+    print('\n--- System Information ---')
+    print(f'CPU: {cpu_count_physical} physical cores, {cpu_count_logical} '
+          f'logical cores')
+    print(f'Memory: {available_mem_gb:.1f} GB available / {total_mem_gb:.1f} '
+          f'GB total')
+    
+    
 
 # endregion
+
+# region system info
+
+
+# endregion
+
 
 timers = TimerCollection()
 
-with timers('task 1'):
 

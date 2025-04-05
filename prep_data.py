@@ -1,11 +1,9 @@
-import sys, gc
 import polars as pl
-sys.path.append('projects/def-wainberg/karbabi/utils')
+import gc
 from single_cell import SingleCell
-from utils import print_df
 
 sc = SingleCell(
-    'projects/def-wainberg/single-cell/Green/'
+    'projects/rrg-wainberg/single-cell/Green/'
     'p400_qced_shareable.h5ad')
 sc.X.sort_indices()
 sc = sc\
@@ -24,24 +22,11 @@ sc = sc\
         pl.col('class').is_not_null() &
         pl.col('subclass').is_not_null())
 
-path = 'projects/def-wainberg/single-cell/Subsampled'
-sizes = {1000000: '1M', 100000: '100K', 10000: '10K'}
+path = 'projects/rrg-wainberg/single-cell/Green/Subsampled'
+sizes = { 1000000: '1M', 500000: '500K', 100000: '100K',  20000: '20K'}
 for n, label in sizes.items():
     sc_sub = sc.subsample_obs(n=n)
     sc_sub.save(f'{path}/Green_raw_{label}.h5ad', overwrite=True)
-    sc_sub.save(f'{path}/Green_raw_{label}.rds', overwrite=True)
-    del sc_sub; gc()
-
-
-sc = SingleCell(
-    'projects/def-wainberg/single-cell/Green/'
-    'p400_qced_shareable.h5ad')\
-    .filter_obs(pl.col.subset.is_not_null())
-print_df(sc.obs['subset'].value_counts())
-print(sc.shape[0])
-sc_sub1 = sc.subsample_obs(n=10000)
-print(sc_sub1.shape[0])
-sc_sub2 = sc.subsample_obs(n=10000, by_column='subset')
-print(sc_sub2.shape[0])
-
-sc_sub1.to_seurat('tmp')
+    if label != '1M':
+        sc_sub.save(f'{path}/Green_raw_{label}.rds', overwrite=True)
+    del sc_sub; gc.collect()
