@@ -1,11 +1,8 @@
-import sys, os, gc, psutil
+import psutil
+import socket
 import polars as pl
 from contextlib import contextmanager
 from timeit import default_timer
-sys.path.append('projects/def-wainberg/karbabi/utils')
-from single_cell import SingleCell
-
-# region functions
 
 class TimerCollection:
     def __init__(self, silent=True):
@@ -74,8 +71,34 @@ class TimerCollection:
                 if len(parts) == 2:
                     break
         return ' '.join(parts) if parts else 'less than 1ns'
-    
-def print_system_info():
+        
+    def to_dataframe(self, sort=True):
+        if not self.timings:
+            return pl.DataFrame({
+                'operation': [], 'duration_seconds': [], 
+                'aborted': [], 'percentage': []
+            })
+            
+        ops, durs, aborts, pcts = [], [], [], []
+        total = sum(info['duration'] for info in self.timings.values())
+        
+        items = sorted(self.timings.items(), 
+                      key=lambda x: x[1]['duration'], 
+                      reverse=True) if sort else list(self.timings.items())
+            
+        for msg, info in items:
+            ops.append(msg)
+            durs.append(info['duration'])
+            aborts.append(info['aborted'])
+            pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
+            
+        return pl.DataFrame({
+            'operation': ops, 'duration_seconds': durs,
+            'aborted': aborts, 'percentage': pcts
+        })
+
+def system_info():
+    hostname = socket.gethostname()    
     cpu_count_physical = psutil.cpu_count(logical=False)
     cpu_count_logical = psutil.cpu_count(logical=True)
     
@@ -84,21 +107,9 @@ def print_system_info():
     available_mem_gb = mem.available / (1024 ** 3)
     
     print('\n--- System Information ---')
+    print(f'Node: {hostname}')
     print(f'CPU: {cpu_count_physical} physical cores, {cpu_count_logical} '
           f'logical cores')
     print(f'Memory: {available_mem_gb:.1f} GB available / {total_mem_gb:.1f} '
           f'GB total')
     
-    
-
-# endregion
-
-# region system info
-
-
-# endregion
-
-
-timers = TimerCollection()
-
-
