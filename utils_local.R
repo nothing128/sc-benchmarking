@@ -19,7 +19,7 @@ TimerCollection = function(silent = TRUE) {
     aborted = FALSE
     
     tryCatch({
-      result = eval(substitute(expr), parent.frame())
+      result = invisible(eval(substitute(expr), parent.frame()))
     }, error = function(e) {
       aborted = TRUE
       stop(e)
@@ -29,9 +29,15 @@ TimerCollection = function(silent = TRUE) {
         duration = duration,
         aborted = aborted
       )
+      
+      if (!silent) {
+        time_str = format_time(duration)
+        status = if (aborted) 'aborted after' else 'took'
+        cat(sprintf('%s %s %s\n\n', message, status, time_str))
+      }
     })
     
-    return(result)
+    return(invisible(result))
   }
   
   format_time = function(duration) {
