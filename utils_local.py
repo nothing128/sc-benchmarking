@@ -102,7 +102,7 @@ class TimerCollection:
                     print(f'{message} {status} {time_str}\n')
         return timer()
     
-    def print_summary(self, sort=True):
+    def print_summary(self, sort=True, unit=None):
         print('\n--- Timing Summary ---')
         if sort:
             timings_items = sorted(
@@ -117,11 +117,31 @@ class TimerCollection:
             duration = info['duration']
             percentage = (duration / total_time) * 100 if total_time > 0 else 0
             status = 'aborted after' if info['aborted'] else 'took'
-            time_str = self._format_time(duration)
+            time_str = self._format_time(duration, unit)
             print(f'{message} {status} {time_str} ({percentage:.1f}%)')
-        print(f'\nTotal time: {self._format_time(total_time)}')
+        print(f'\nTotal time: {self._format_time(total_time, unit)}')
     
-    def _format_time(self, duration):
+    def _format_time(self, duration, unit=None):
+        if unit is not None:
+            converted = duration
+            if unit == 's':
+                pass
+            elif unit == 'ms':
+                converted = duration * 1000
+            elif unit == 'us' or unit == 'µs':
+                converted = duration * 1000000
+            elif unit == 'ns':
+                converted = duration * 1000000000
+            elif unit == 'm':
+                converted = duration / 60
+            elif unit == 'h':
+                converted = duration / 3600
+            elif unit == 'd':
+                converted = duration / 86400
+            else:
+                raise ValueError(f"Unsupported unit: {unit}")
+            return f"{converted}{unit}"
+        
         units = [
             (86400, 'd'),
             (3600, 'h'),
@@ -146,11 +166,11 @@ class TimerCollection:
                     break
         return ' '.join(parts) if parts else 'less than 1ns'
         
-    def to_dataframe(self, sort=True):
+    def to_dataframe(self, sort=True, unit=None):
         if not self.timings:
             return pl.DataFrame({
-                'operation': [], 'duration_seconds': [], 
-                'aborted': [], 'percentage': []
+                'operation': [], 'duration': [], 
+                'duration_unit': [], 'aborted': [], 'percentage': []
             })
             
         ops, durs, aborts, pcts = [], [], [], []
@@ -159,15 +179,43 @@ class TimerCollection:
         items = sorted(self.timings.items(), 
                       key=lambda x: x[1]['duration'], 
                       reverse=True) if sort else list(self.timings.items())
+        
+        duration_unit = 's'
+        if unit is not None:
+            duration_unit = unit
+            conversion = 1.0
+            if unit == 's':
+                pass
+            elif unit == 'ms':
+                conversion = 1000
+            elif unit == 'us' or unit == 'µs':
+                conversion = 1000000
+            elif unit == 'ns':
+                conversion = 1000000000
+            elif unit == 'm':
+                conversion = 1/60
+            elif unit == 'h':
+                conversion = 1/3600
+            elif unit == 'd':
+                conversion = 1/86400
+            else:
+                raise ValueError(f"Unsupported unit: {unit}")
             
-        for msg, info in items:
-            ops.append(msg)
-            durs.append(info['duration'])
-            aborts.append(info['aborted'])
-            pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
+            for msg, info in items:
+                ops.append(msg)
+                durs.append(info['duration'] * conversion)
+                aborts.append(info['aborted'])
+                pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
+        else:
+            for msg, info in items:
+                ops.append(msg)
+                durs.append(info['duration'])
+                aborts.append(info['aborted'])
+                pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
             
         return pl.DataFrame({
-            'operation': ops, 'duration_seconds': durs,
+            'operation': ops, 'duration': durs,
+            'duration_unit': [duration_unit] * len(ops),
             'aborted': aborts, 'percentage': pcts
         })
     

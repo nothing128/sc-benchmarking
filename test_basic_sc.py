@@ -4,8 +4,8 @@ import sys
 import polars as pl
 from single_cell import SingleCell
 
-work_dir = 'projects/def-wainberg/karbabi/sc-benchmarking'
-data_dir = 'single-cell/SEAAD/subsampled'
+work_dir = 'projects/sc-benchmarking'
+data_dir = 'scratch/single-cell/SEAAD'
 sys.path.append(work_dir)
 
 from utils_local import TimerCollection, system_info
@@ -13,6 +13,8 @@ from utils_local import TimerCollection, system_info
 system_info()
 size = '20K'
 timers = TimerCollection(silent=False)
+
+# # Note: Load times should not be considered when using $SCRATCH disk 
 
 # with timers('Load data (10X mtx)'):
 #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}/matrix.mtx.gz')
@@ -29,7 +31,8 @@ timers = TimerCollection(silent=False)
 # del data; gc.collect()
 
 with timers('Load data'):
-    data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.h5ad')
+    data = SingleCell(
+        f'{data_dir}/SEAAD_raw_{size}.h5ad')
 
 print(f'X num_threads: {data.X._num_threads}')
 
@@ -44,6 +47,8 @@ with timers('Quality control'):
         nonzero_MALAT1=False,
         remove_doublets=False,
         allow_float=True)
+    
+print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 
 with timers('Doublet detection'):
     data = data.find_doublets(batch_column='sample')
@@ -67,42 +72,47 @@ with timers('Neighbor graph'):
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(resolution=[1, 0.5, 2])
 
-print(f'cell_type_1: {len(data.obs['cell_type_1'].unique())}')
-print(f'cell_type_2: {len(data.obs['cell_type_2'].unique())}')
-print(f'cell_type_3: {len(data.obs['cell_type_3'].unique())}')
+print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
+print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
+print(f'cluster_3: {len(data.obs['cluster_3'].unique())}')
 
-data = data.cast_obs({'cell_type_1': pl.String})
+data = data.cast_obs({'cluster_1': pl.String})
 
 with timers('Embedding'):
     data = data.embed()
 
 with timers('Plot embeddings'):
     data.plot_embedding(
-        'cell_type_1',
+        'cluster_1',
         f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
 
 with timers('Find markers'):
-    markers = data.find_markers('cell_type_1')
+    markers = data.find_markers('cluster_1')
 
 timers.print_summary(sort=False)
-timers_df = timers.to_dataframe()\
+timers_df = timers\
+    .to_dataframe(sort=False, unit='s')\
     .with_columns(pl.lit('test_basic_sc').alias('test'),
                   pl.lit(size).alias('size'))
 
+print(timers_df)
+
+timers_df.write_csv(f'{work_dir}/output/test_basic_sc_{size}.csv')
+
 '''
 --- Timing Summary ---
-Load data (h5ad) took 2s 197ms (4.7%)
-Quality control took 286ms 565µs (0.6%)
-Doublet detection took 9s 903ms (21.3%)
-Feature selection took 247ms 793µs (0.5%)
-Normalization took 44ms 560µs (0.1%)
-PCA took 25s 57ms (53.8%)
-Neighbor graph took 814ms 333µs (1.7%)
-Clustering took 5s 238ms (11.3%)
-Embedding took 738ms 239µs (1.6%)
-Plot embeddings took 1s 937ms (4.2%)
-Find markers took 79ms 789µs (0.2%)
+Load data took 5s 513ms (14.1%)
+Quality control took 891ms 254µs (2.3%)
+Doublet detection took 15s 870ms (40.6%)
+Feature selection took 890ms 739µs (2.3%)
+Normalization took 165ms 935µs (0.4%)
+PCA took 8s 511ms (21.8%)
+Neighbor graph took 307ms 762µs (0.8%)
+Clustering (3 resolutions) took 155ms 735µs (0.4%)
+Embedding took 1s 121ms (2.9%)
+Plot embeddings took 5s 508ms (14.1%)
+Find markers took 179ms 444µs (0.5%)
 
-Total time: 46s 545ms
+Total time: 39s 116ms
 '''
 

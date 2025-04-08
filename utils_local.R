@@ -40,8 +40,23 @@ TimerCollection = function(silent = TRUE) {
     return(invisible(result))
   }
   
-  format_time = function(duration) {
+  format_time = function(duration, unit = NULL) {
     duration = as.numeric(duration)
+    
+    if (!is.null(unit)) {
+      converted = switch(unit,
+                        "s" = duration,
+                        "ms" = duration * 1000,
+                        "us" = duration * 1000000,
+                        "µs" = duration * 1000000,
+                        "ns" = duration * 1000000000,
+                        "m" = duration / 60,
+                        "h" = duration / 3600,
+                        "d" = duration / 86400,
+                        stop("Unsupported unit: ", unit))
+      return(paste0(format(converted, scientific = FALSE), unit))
+    }
+    
     units = list(
       list(threshold = 86400, suffix = 'd'),
       list(threshold = 3600, suffix = 'h'),
@@ -76,7 +91,7 @@ TimerCollection = function(silent = TRUE) {
     if (length(parts) > 0) paste(parts, collapse = ' ') else 'less than 1ns'
   }
   
-  print_summary = function(sort = TRUE) {
+  print_summary = function(sort = TRUE, unit = NULL) {
     cat('\n--- Timing Summary ---\n')
     
     if (length(env$timings) == 0) {
@@ -98,19 +113,20 @@ TimerCollection = function(silent = TRUE) {
       duration = info$duration
       percentage = if (total_time > 0) (duration / total_time) * 100 else 0
       status = if (info$aborted) 'aborted after' else 'took'
-      time_str = format_time(duration)
+      time_str = format_time(duration, unit)
       
       cat(sprintf('%s %s %s (%.1f%%)\n', msg, status, time_str, percentage))
     }
     
-    cat(sprintf('\nTotal time: %s\n', format_time(total_time)))
+    cat(sprintf('\nTotal time: %s\n', format_time(total_time, unit)))
   }
   
-  to_dataframe = function(sort = TRUE) {
+  to_dataframe = function(sort = TRUE, unit = NULL) {
     if (length(env$timings) == 0) {
       return(data.frame(
         operation = character(0),
-        duration_seconds = numeric(0),
+        duration = numeric(0),
+        duration_unit = character(0),
         aborted = logical(0),
         percentage = numeric(0)
       ))
@@ -127,6 +143,23 @@ TimerCollection = function(silent = TRUE) {
     
     ops = items
     durs = sapply(items, function(msg) env$timings[[msg]]$duration)
+    
+    if (!is.null(unit)) {
+      durs = switch(unit,
+                   "s" = durs,
+                   "ms" = durs * 1000,
+                   "us" = durs * 1000000,
+                   "µs" = durs * 1000000,
+                   "ns" = durs * 1000000000,
+                   "m" = durs / 60,
+                   "h" = durs / 3600,
+                   "d" = durs / 86400,
+                   stop("Unsupported unit: ", unit))
+      duration_unit = unit
+    } else {
+      duration_unit = "s" 
+    }
+    
     aborts = sapply(items, function(msg) env$timings[[msg]]$aborted)
     pcts = sapply(items, function(msg) {
       if (total > 0) (env$timings[[msg]]$duration / total) * 100 else 0
@@ -134,7 +167,8 @@ TimerCollection = function(silent = TRUE) {
     
     data.frame(
       operation = ops,
-      duration_seconds = durs,
+      duration = durs,
+      duration_unit = duration_unit,
       aborted = aborts,
       percentage = pcts
     )
