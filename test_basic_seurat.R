@@ -11,95 +11,110 @@ source(file.path(work_dir, "utils_local.R"))
 
 system_info()
 
-size = "20K"
+for (size in c("20K", "400K")) {  
+  timers = TimerCollection(silent = FALSE)
 
-timers = TimerCollection(silent = FALSE)
+  # timers$with_timer("Load data (10X mtx)", {
+  #   data <- Read10X(
+  #       data.dir = paste0(data_dir, "/SEAAD_raw_", size),
+  #       gene.column=1)
+  #   data <- CreateSeuratObject(counts = data)
+  # })
+  # rm(data); invisible(gc())
 
-# # Note: Load times should not be considered when using $SCRATCH disk 
+  # timers$with_timer("Load data (h5)", {
+  #   data = Read10X_h5(
+  #       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
+  #   data <- CreateSeuratObject(counts = data)
+  # })
+  # rm(data); invisible(gc())
 
-# timers$with_timer("Load data (10X mtx)", {
-#   data <- Read10X(
-#       data.dir = paste0(data_dir, "/SEAAD_raw_", size),
-#       gene.column=1)
-#   data <- CreateSeuratObject(counts = data)
-# })
-# rm(data); invisible(gc())
+  timers$with_timer("Load data (h5ad/rds)", {
+    data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+  })
 
-# timers$with_timer("Load data (h5)", {
-#   data = Read10X_h5(
-#       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
-#   data <- CreateSeuratObject(counts = data)
-# })
-# rm(data); invisible(gc())
+  # Note: QC filters are matched across libraries for timing, then 
+  # standardized by filtering to single_cell.py QC cells, not timed 
 
-# # Note: rds files contains additional metadata columns vs above
+  timers$with_timer("Quality control", {
+    data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
+    data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
+  })
 
-timers$with_timer("Load data", {
-  data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
-})
+  data <- subset(data, subset = passed_QC_tmp == TRUE)
+  print(paste0('cells: ', ncol(data), ', genes: ', nrow(data)))
 
-# Note: QC filters are matched across libraries for timing, then 
-# standardized by filtering to single_cell.py QC cells, not timed 
+  # Note: No doublet detection offered in Seurat
 
-timers$with_timer("Quality control", {
-  data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
-  data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
-})
+  timers$with_timer("Normalization", {
+    data <- NormalizeData(
+      data, normalization.method = "LogNormalize", scale.factor = 10000)
+  })
 
-data <- subset(data, subset = passed_QC_tmp == TRUE)
-print(paste0('cells: ', ncol(data), ', genes: ', nrow(data)))
+  timers$with_timer("Feature selection", {
+    data <- FindVariableFeatures(
+      data, selection.method = "vst", nfeatures = 2000)  
+  })
 
-# Note: No doublet detection offered in Seurat
+  timers$with_timer("PCA", {
+    all.genes <- rownames(data)
+    data <- ScaleData(data, features = all.genes)
+    data <- RunPCA(data, features = VariableFeatures(object = data))
+  })
 
-timers$with_timer("Normalization", {
-  data <- NormalizeData(
-    data, normalization.method = "LogNormalize", scale.factor = 10000)
-})
+  timers$with_timer("Neighbor graph", {
+    data = FindNeighbors(data, dims = 1:10)
+  })
 
-timers$with_timer("Feature selection", {
-  data <- FindVariableFeatures(
-    data, selection.method = "vst", nfeatures = 2000)  
-})
+  #TODO: The number of clusters needs to match across libraries
 
-timers$with_timer("PCA", {
-  all.genes <- rownames(data)
-  data <- ScaleData(data, features = all.genes)
-  data <- RunPCA(data, features = VariableFeatures(object = data))
-})
+  timers$with_timer("Clustering (3 resolutions)", {
+    for (resolution in c(0.5, 2, 1)) {
+      data = FindClusters(data, resolution = resolution)
+    }
+  })
 
-timers$with_timer("Neighbor graph", {
-  data = FindNeighbors(data, dims = 1:10)
-})
+  print(paste0('seuratclusters: ', length(unique(data$seurat_clusters))))
 
-timers$with_timer("Clustering (3 resolutions)", {
-  for (resolution in c(0.5, 2, 1)) {
-    data = FindClusters(data, resolution = resolution)
-  }
-})
+  timers$with_timer("Embedding", {
+    data = RunUMAP(data, dims = 1:10)
+  })
 
-print(paste0('seuratclusters: ', length(unique(data$seurat_clusters))))
+  timers$with_timer("Plot embeddings", {
+    DimPlot(data, reduction = "umap")
+    ggsave(paste0(work_dir, "/figures/seurat_embedding_cluster_", size, ".png"),
+          dpi = 300, units = "in", width = 10, height = 10)
+  })
 
-timers$with_timer("Embedding", {
-  data = RunUMAP(data, dims = 1:10)
-})
+  timers$with_timer("Find markers", {
+    markers = FindAllMarkers(data, only.pos = TRUE)
+  })
 
-timers$with_timer("Plot embeddings", {
-  DimPlot(data, reduction = "umap")
-  ggsave(paste0(work_dir, "/figures/seurat_embedding_cluster_", size, ".png"),
-         dpi = 300, units = "in", width = 10, height = 10)
-})
+  timers$print_summary(sort = FALSE)
+  timers_df = timers$to_dataframe(unit = "s", sort = FALSE)
+  timers_df$test = 'test_basic_seurat'
+  timers_df$size = size
 
-timers$with_timer("Find markers", {
-  markers = FindAllMarkers(data, only.pos = TRUE)
-})
+  print(timers_df)
 
-timers$print_summary(sort = FALSE)
-timers_df = timers$to_dataframe(unit = "s", sort = FALSE)
-timers_df$test = 'test_basic_seurat'
-timers_df$size = size
+  write.csv(timers_df, 
+    paste0(work_dir, "/output/test_basic_seurat_", size, ".csv"), 
+    row.names = FALSE)
+}
 
-print(timers_df)
+'''
+--- Timing Summary 20K ---
+Load data (h5ad/rds) took 12s 254ms (4.3%)
+Quality control took 6s 109ms (2.1%)
+Normalization took 5s 102ms (1.8%)
+Feature selection took 16s 516ms (5.8%)
+PCA took 35s 672ms (12.5%)
+Neighbor graph took 4s 817ms (1.7%)
+Clustering (3 resolutions) took 4s 757ms (1.7%)
+Embedding took 30s 45ms (10.5%)
+Plot embeddings took 2s 801ms (1.0%)
+Find markers took 2m 47s (58.6%)
 
-write.csv(timers_df, 
-  paste0(work_dir, "/output/test_basic_seurat_", size, ".csv"), 
-  row.names = FALSE)
+Total time: 4m 45s
+
+'''
