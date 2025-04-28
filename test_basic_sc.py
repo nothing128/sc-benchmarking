@@ -29,9 +29,13 @@ for size in ['20K', '400K', '1M']:
     #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.rds')
     # del data; gc.collect()
 
+    # with timers('Load data (h5Seurat)'):
+    #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.h5Seurat')  
+    #     del data; gc.collect()
+
     # Note: Loading is much slower from $SCRATCH disk
     
-    with timers('Load data (h5ad/rds)'):
+    with timers('Load data'):
         data = SingleCell(
             f'{data_dir}/SEAAD_raw_{size}.h5ad',
             num_threads=num_threads)

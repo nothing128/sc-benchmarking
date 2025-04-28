@@ -98,6 +98,9 @@ for n, label in sizes.items():
         print(f'Saving {label} rds')
         sc_sub.save(f'{path}/SEAAD_raw_{label}.rds', overwrite=True)
 
+        print(f'Saving {label} h5Seurat')
+        sc_sub.save(f'{path}/SEAAD_raw_{label}.h5Seurat', overwrite=True)
+
     del sc_sub; gc.collect()
 
 

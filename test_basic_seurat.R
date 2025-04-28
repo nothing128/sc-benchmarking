@@ -29,6 +29,8 @@ for (size in c("20K", "400K")) {
   # })
   # rm(data); invisible(gc())
 
+  # Note: Loading is much slower from $SCRATCH disk
+
   timers$with_timer("Load data (h5ad/rds)", {
     data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
   })
