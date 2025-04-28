@@ -8,17 +8,23 @@ from utils import run
 work_dir = 'projects/def-wainberg/karbabi/sc-benchmarking'
 sys.path.append(work_dir)
 
-from utils_local import write_to_mtx, write_to_h5
+# https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html
 
 file_data = 'single-cell/SEAAD/SEAAD_MTG_RNAseq_all-nuclei.2024-02-13.h5ad'
 file_metadata = 'single-cell/SEAAD/sea-ad_cohort_donor_metadata.xlsx'
+file_ref_data = 'single-cell/SEAAD/Reference_MTG_RNAseq_final-nuclei.2022-06-07.h5ad'
 
 if not os.path.exists(file_data):
     run(f'wget https://sea-ad-single-cell-profiling.s3.amazonaws.com/'
-        'MTG/RNAseq/SEAAD_MTG_RNAseq_all-nuclei.2024-02-13.h5ad -O {file_data}')
+        'MTG/RNAseq/SEAAD_MTG_RNAseq_all-nuclei.2024-02-13.h5ad '
+        '-O {file_data}')
     run(f'wget https://brainmapportal-live-4cc80a57cd6e400d854-f7fdcae.'
         'divio-media.net/filer_public/b4/c7/b4c727e1-ede1-4c61-b2ee-bf1ae4a3ef68/'
-        'sea-ad_cohort_donor_metadata_072524.xlsx -O {file_metadata}')
+        'sea-ad_cohort_donor_metadata_072524.xlsx '
+        '-O {file_metadata}')
+    run(f'wget https://sea-ad-single-cell-profiling.s3.amazonaws.com/MTG/' 
+        'RNAseq/Reference_MTG_RNAseq_final-nuclei.2022-06-07.h5ad '
+        '-O {file_ref_data}')
     
 donor_metadata = pl.read_excel(file_metadata)
 cols = ['cell_id', 'sample', 'cp_score', 'ad_dx', 'apoe4_dosage',
@@ -63,10 +69,10 @@ sc = sc\
         'X_normalization', 'batch_condition', 'default_embedding',
         'title', 'normalized', 'QCed'])\
     .qc(subset=False,
-        QC_column='passed_QC_tmp',
+        QC_column='tmp_passed_QC',
         max_mito_fraction=0.05, 
         min_genes=100,
-        nonzero_MALAT1=False,
+        nonzero_MALAT1=True,
         remove_doublets=True,
         batch_column='sample',
         allow_float=True)\
@@ -82,20 +88,17 @@ for n, label in sizes.items():
     print(f'Saving {label} h5ad')
     sc_sub.save(f'{path}/SEAAD_raw_{label}.h5ad', overwrite=True)
 
+    print(f'Saving {label} h5')
+    sc_sub.save(f'{path}/SEAAD_raw_{label}.h5', overwrite=True)
+
+    print(f'Saving {label} mtx.gz')
+    sc_sub.save(f'{path}/SEAAD_raw_{label}/matrix.mtx.gz', overwrite=True)
+
     if label != '1M':
         print(f'Saving {label} rds')
         sc_sub.save(f'{path}/SEAAD_raw_{label}.rds', overwrite=True)
 
-    # adata = sc_sub.to_anndata()
-    # print(f'Saving {label} mtx')
-    # write_to_mtx(adata, f'{path}/SEAAD_raw_{label}')
-    # print(f'Saving {label} h5')
-    # write_to_h5(adata, f'{path}/SEAAD_raw_{label}.h5')
-
     del sc_sub; gc.collect()
-    # del adata; gc.collect()
-
-
 
 
 # sc = SingleCell(
@@ -117,13 +120,3 @@ for n, label in sizes.items():
 #         pl.col('sample').is_not_null() & 
 #         pl.col('class').is_not_null() &
 #         pl.col('subclass').is_not_null())
-
-# path = 'projects/rrg-wainberg/single-cell/Green/Subsampled'
-# sizes = {1000000: '1M', 500000: '500K', 100000: '100K',  20000: '20K'}
-# for n, label in sizes.items():
-#     sc_sub = sc.subsample_obs(n=n)
-#     sc_sub.save(f'{path}/Green_raw_{label}.h5ad', overwrite=True)
-#     if label != '1M':
-#         sc_sub.save(f'{path}/Green_raw_{label}.rds', overwrite=True)
-#     del sc_sub; gc.collect()
-
