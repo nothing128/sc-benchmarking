@@ -1,40 +1,36 @@
+import os
 import gc
 import sys
 import polars as pl
+import itertools
 from single_cell import SingleCell
 
-work_dir = 'projects/sc-benchmarking'
-data_dir = 'scratch/single-cell/SEAAD'
+work_dir = 'projects/rrg-wainberg/karbabi/sc-benchmarking'
+data_dir = 'single-cell/SEAAD/subsampled'
+
+os.makedirs(f'{work_dir}/output', exist_ok=True)
+os.makedirs(f'{work_dir}/figures', exist_ok=True)
 sys.path.append(work_dir)
 
 from utils_local import TimerCollection, system_info
 
 system_info()
 
-num_threads = -1
+num_threads_options = [-1, 1]
+subset_options = [True, False]
+drop_X_options = [True, False]
+size_options = ['20K', '400K', '1M']
 
-for size in ['20K', '400K', '1M']:
+all_timers = []
 
-    timers = TimerCollection(silent=False)
+params = itertools.product(
+    size_options, num_threads_options, subset_options, drop_X_options
+)
 
-    # with timers('Load data (10X mtx)'):
-    #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}/matrix.mtx.gz')
-    # del data; gc.collect()
+for size, num_threads, subset, drop_X in params:
+    timers = TimerCollection(silent=True)
 
-    # with timers('Load data (h5)'):
-    #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.h5')
-    # del data; gc.collect()
-
-    # with timers('Load data (rds)'):
-    #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.rds')
-    # del data; gc.collect()
-
-    # with timers('Load data (h5Seurat)'):
-    #     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.h5Seurat')  
-    #     del data; gc.collect()
-
-    # Note: Loading is much slower from $SCRATCH disk
-    
+    # Note: Loading is much slower from $scratch disk
     with timers('Load data'):
         data = SingleCell(
             f'{data_dir}/SEAAD_raw_{size}.h5ad',
@@ -42,27 +38,34 @@ for size in ['20K', '400K', '1M']:
 
     print(f'X num_threads: {data.X._num_threads}')
 
-    # Note: QC filters are matched across libraries for timing, then 
-    # standardized by filtering to single_cell.py QC cells, not timed 
-
+    # Note: QC filters are matched across libraries for timing, then
+    # standardized by filtering to single_cell.py qc cells
     with timers('Quality control'):
-        data = data.qc(
-            subset=True,
+        data.qc(
+            subset=subset,
             max_mito_fraction=0.05,
             min_genes=100,
             nonzero_MALAT1=False,
             remove_doublets=False,
             allow_float=True,
+            verbose=False,
             num_threads=num_threads)
-        
-    print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
+
+    # Not timed
+    if subset:
+        data = data\
+            .filter_obs(pl.col('tmp_passed_QC'))\
+            .with_uns(QCed=True)
+    else:
+        data = data\
+            .rename_obs({'tmp_passed_QC': 'passed_QC'})\
+            .with_uns(QCed=True)
 
     with timers('Doublet detection'):
         data = data.find_doublets(
             batch_column='sample',
             num_threads=num_threads)
 
-    data = data.filter_obs(pl.col('passed_QC_tmp'))
     print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 
     with timers('Feature selection'):
@@ -78,22 +81,32 @@ for size in ['20K', '400K', '1M']:
     with timers('PCA'):
         data = data.PCA(num_threads=num_threads)
 
-    with timers('Neighbor graph'):
-        data = data.neighbors(num_threads=num_threads)
-        data = data.shared_neighbors(num_threads=num_threads)
+    # Not timed
+    if not subset:
+        data = data.filter_obs(pl.col('passed_QC'))
+    if drop_X:
+        X_copy = data.X.copy()
+        data = data.drop_X()
 
-    #TODO: The number of clusters needs to match across libraries
+    with timers('Neighbor graph'):
+        with timers('KNN'):
+            data = data.neighbors(num_threads=num_threads)
+        with timers('SNN'):
+            data = data.shared_neighbors(num_threads=num_threads)
+
+    # TODO: The number of clusters needs to match across libraries
 
     with timers('Clustering (3 resolutions)'):
         data = data.cluster(
             resolution=[1, 0.5, 2],
             num_threads=num_threads)
 
-    print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
-    print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
-    print(f'cluster_3: {len(data.obs['cluster_3'].unique())}')
+    print(f'cluster_0: {len(data.obs["cluster_0"].unique())}')
+    print(f'cluster_1: {len(data.obs["cluster_1"].unique())}')
+    print(f'cluster_2: {len(data.obs["cluster_2"].unique())}')
 
-    data = data.cast_obs({'cluster_1': pl.String})
+    # TODO: Swap neighbor graphs with scanpy to assess
+    # embedding differences
 
     with timers('Embedding'):
         data = data.embed(
@@ -101,99 +114,72 @@ for size in ['20K', '400K', '1M']:
 
     with timers('Plot embeddings'):
         data.plot_embedding(
-            'cluster_1',
+            'cluster_0',
             f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
+
+    # Not timed
+    if drop_X:
+        data.X = X_copy
 
     with timers('Find markers'):
         markers = data.find_markers(
-            'cluster_1',
+            'cluster_0',
             num_threads=num_threads)
 
+    with timers('Save data'):
+        data.save(
+            f'{data_dir}/test_write.h5ad',
+            overwrite=True)
+
+    # Not timed
+    os.remove(f'{data_dir}/test_write.h5ad')
+
+    print('--- Params ---')
+    print(f'{size=}, {num_threads=}, {subset=}, {drop_X=}')
     timers.print_summary(sort=False)
-    timers_df = timers\
+
+    df = timers\
         .to_dataframe(sort=False, unit='s')\
-        .with_columns(pl.lit('test_basic_sc').alias('test'),
-                    pl.lit(size).alias('size'))
+        .with_columns(
+            pl.lit('basic').alias('vignette'),
+            pl.lit(size).alias('size'),
+            pl.lit(num_threads).alias('num_threads'),
+            pl.lit(subset).alias('subset'),
+            pl.lit(drop_X).alias('drop_X'))
 
-    print(timers_df)
-    timers_df.write_csv(
-        f'{work_dir}/output/test_basic_sc_single_thread_{size}.csv')
+    all_timers.append(df)
+    del data, timers, df; gc.collect()
 
-    del timers, timers_df, data; gc.collect()
+timers_df = pl.concat(all_timers)
+timers_df.write_csv(f'{work_dir}/output/test_basic_sc_all.csv')
 
 '''
 --- System Information ---
-Node: nia0036.scinet.local
-CPU: 40 physical cores, 80 logical cores
-Memory: 170.6 GB available / 188.6 GB total
+Node: nl10603.narval.calcul.quebec
+CPU: 64 physical cores, 64 logical cores
+Memory: 1987.9 GB available / 2015.4 GB total
 
---- Timing Summary 20K ---
-Load data (h5ad/rds) took 10s 441ms (22.0%)
-Quality control took 438ms 695µs (0.9%)
-Doublet detection took 9s 759ms (20.6%)
-Feature selection took 250ms 396µs (0.5%)
-Normalization took 98ms 580µs (0.2%)
-PCA took 24s 116ms (50.8%)
-Neighbor graph took 230ms 84µs (0.5%)
-Clustering (3 resolutions) took 108ms 114µs (0.2%)
-Embedding took 148ms 844µs (0.3%)
-Plot embeddings took 1s 768ms (3.7%)
-Find markers took 102ms 201µs (0.2%)
+--- Params ---
+size='20K', num_threads=-1, subset=True, drop_X=True
 
-Total time: 47s 462ms
+--- Timing Summary ---
+Load data took 332ms 514µs (0.8%)
+Quality control took 57ms 488µs (0.1%)
+Doublet detection took 3s 837ms (8.7%)
+Feature selection took 188ms 536µs (0.4%)
+Normalization took 11ms 741µs (0.0%)
+PCA took 33s 491ms (75.9%)
+KNN took 929ms 249µs (2.1%)
+SNN took 85ms 344µs (0.2%)
+Neighbor graph took 1s 14ms (2.3%)
+Clustering (3 resolutions) took 121ms 646µs (0.3%)
+Embedding took 1s 112ms (2.5%)
+Plot embeddings took 2s 36ms (4.6%)
+Find markers took 75ms 189µs (0.2%)
+Save data took 810ms 135µs (1.8%)
 
---- Timing Summary 400K ---
-Load data (h5ad/rds) took 16s 404ms (19.0%)
-Quality control took 5s 490ms (6.3%)
-Doublet detection took 9s 988ms (11.5%)
-Feature selection took 618ms 243µs (0.7%)
-Normalization took 570ms 126µs (0.7%)
-PCA took 34s 203ms (39.5%)
-Neighbor graph took 5s 714ms (6.6%)
-Clustering (3 resolutions) took 4s 474ms (5.2%)
-Embedding took 3s 698ms (4.3%)
-Plot embeddings took 5s 69ms (5.9%)
-Find markers took 300ms 986µs (0.3%)
-
-Total time: 1m 26s
-
---- Timing Summary 1M ---
-Load data (h5ad/rds) took 50s 932ms (29.7%)
-Quality control took 12s 550ms (7.3%)
-Doublet detection took 19s 255ms (11.2%)
-Feature selection took 1s 460ms (0.9%)
-Normalization took 1s 464ms (0.9%)
-PCA took 30s 932ms (18.0%)
-Neighbor graph took 22s 135ms (12.9%)
-Clustering (3 resolutions) took 14s 548ms (8.5%)
-Embedding took 7s 829ms (4.6%)
-Plot embeddings took 10s 48ms (5.9%)
-Find markers took 484ms 85µs (0.3%)
-
-Total time: 2m 51s
-
---- Timing Summary 20K single thread ---
-Load data (h5ad/rds) took 2s 758ms (1.9%)
-Quality control took 955ms 848µs (0.7%)
-Doublet detection took 2m 9s (90.2%)
-Feature selection took 815ms 28µs (0.6%)
-Normalization took 1s 113ms (0.8%)
-PCA took 2s 908ms (2.0%)
-Neighbor graph took 779ms 234µs (0.5%)
-Clustering (3 resolutions) took 296ms 994µs (0.2%)
-Embedding took 1s 685ms (1.2%)
-Plot embeddings took 2s 547ms (1.8%)
-Find markers took 190ms 362µs (0.1%)
+Total time: 44s 104ms
 
 
-20K
-Load data (10X mtx) took 8s 732ms (8.7%)
-Load data (h5) took 10s 588ms (10.5%)
-Load data (rds) took 18s 250ms (18.1%)
-
-400K
-Load data (10X mtx) took 2m 47s (31.8%)
-Load data (h5) took 23s 147ms (4.4%)
-Load data (rds) took 3m 47s (43.3%)
 '''
 

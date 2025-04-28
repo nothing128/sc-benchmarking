@@ -1,14 +1,15 @@
+import os
 import psutil
 import socket
 import polars as pl
-from contextlib import contextmanager
-from timeit import default_timer
 import gzip
 import h5py
 import polars as pl
 import numpy as np
 from scipy import sparse
 from scipy.io import mmwrite
+from contextlib import contextmanager
+from timeit import default_timer
 
 def write_to_mtx(adata, output_dir):
     os.makedirs(output_dir, exist_ok=True)

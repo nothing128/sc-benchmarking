@@ -5,8 +5,8 @@ suppressPackageStartupMessages({
     library(patchwork)
 })
 
-work_dir = "projects/sc-benchmarking"
-data_dir = "scratch/single-cell/SEAAD"
+work_dir = "projects/rrg-wainberg/karbabi/sc-benchmarking"
+data_dir = "single-cell/SEAAD/subsampled"
 source(file.path(work_dir, "utils_local.R"))
 
 system_info()
@@ -26,6 +26,12 @@ for (size in c("20K", "400K")) {
   #   data = Read10X_h5(
   #       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
   #   data <- CreateSeuratObject(counts = data)
+  # })
+  # rm(data); invisible(gc())
+
+  # timers$with_timer("Load data (h5Seurat)", {
+  #   data <- LoadH5Seurat(
+  #     data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
   # })
   # rm(data); invisible(gc())
 
@@ -90,6 +96,10 @@ for (size in c("20K", "400K")) {
 
   timers$with_timer("Find markers", {
     markers = FindAllMarkers(data, only.pos = TRUE)
+  })
+
+  timers$with_timer("Save data", {
+    saveRDS(data, paste0(data_dir, "/subsampled/test_write.rds"))
   })
 
   timers$print_summary(sort = FALSE)

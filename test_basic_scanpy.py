@@ -34,9 +34,10 @@ for size in ['20K', '400K', '1M']:
 
     with timers('Quality control'):
         data.var['mt'] = data.var_names.str.startswith('MT-')
-        sc.pp.calculate_qc_metrics(data, qc_vars=['mt'], inplace=True, log1p=True)
-        sc.pp.filter_cells(data, min_genes=100)
-        data = data[data.obs['pct_counts_mt'] <= 5.0]
+        sc.pp.calculate_qc_metrics(
+            data, qc_vars=['mt'], inplace=True, log1p=True)
+        sc.pp.filter_cells(data, min_genes=100, copy=True)
+        sc.pp.filter_genes(data, min_cells=3, copy=True)
 
     print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 

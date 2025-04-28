@@ -1,13 +1,10 @@
 import os
 import gc
-import sys
 import polars as pl
 from single_cell import SingleCell
 from utils import run 
 
-work_dir = 'projects/def-wainberg/karbabi/sc-benchmarking'
-sys.path.append(work_dir)
-
+# SEAAD 
 # https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html
 
 file_data = 'single-cell/SEAAD/SEAAD_MTG_RNAseq_all-nuclei.2024-02-13.h5ad'
@@ -78,6 +75,19 @@ sc = sc\
         allow_float=True)\
     .with_uns(QCed=False)
 
+'''
+Starting with 1,214,581 cells.
+Filtering to cells with ≤5.0% mitochondrial counts...
+1,174,861 cells remain after filtering to cells with ≤5.0% mitochondrial counts.
+Filtering to cells with ≥100 genes detected (with non-zero count)...
+1,174,861 cells remain after filtering to cells with ≥100 genes detected.
+Filtering to cells with non-zero MALAT1 expression...
+1,174,759 cells remain after filtering to cells with non-zero MALAT1 expression.
+Removing predicted doublets...
+894,168 cells remain after removing predicted doublets.
+Adding a Boolean column, obs['tmp_passed_QC'], indicating which cells passed QC...
+'''
+
 path = 'single-cell/SEAAD/subsampled'
 sizes = {1000000: '1M', 400000: '400K', 20000: '20K'}
 
@@ -89,7 +99,15 @@ for n, label in sizes.items():
     sc_sub.save(f'{path}/SEAAD_raw_{label}.h5ad', overwrite=True)
 
     print(f'Saving {label} h5')
-    sc_sub.save(f'{path}/SEAAD_raw_{label}.h5', overwrite=True)
+    sc_sub\
+        .with_columns_obs(
+            pl.col('cell_id').alias('barcodes'))\
+        .with_columns_var(
+            pl.col('gene_ids').alias('name'),
+            pl.col('gene_ids').alias('id'),
+            pl.lit('Gene Expression').alias('feature_type'),
+            pl.lit('unknown').alias('genome'))\
+        .save(f'{path}/SEAAD_raw_{label}.h5', overwrite=True)
 
     print(f'Saving {label} mtx.gz')
     sc_sub.save(f'{path}/SEAAD_raw_{label}/matrix.mtx.gz', overwrite=True)
