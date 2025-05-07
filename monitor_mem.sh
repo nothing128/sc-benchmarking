@@ -53,10 +53,6 @@ if [ ! -z "$TARGET_PID" ] && [ ! -z "$PROCESS_NAME" ]; then
     usage
 fi
 
-if  [ "$INTERVAL" -le 0 ]; then
-    echo "Error: Interval must be a positive number."
-    usage
-fi
 
 # --- Resolve Process Name to PID if necessary ---
 if [ ! -z "$PROCESS_NAME" ]; then

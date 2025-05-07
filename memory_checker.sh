@@ -1,8 +1,8 @@
-ult_#!/bin/bash
+#!/bin/bash
 
 # --- Configuration for the Wrapper ---
 MONITOR_SCRIPT_PATH="./monitor_mem.sh" # Path to your memory monitoring script
-DEFAULT_MONITOR_INTERVAL=0.5           # Default interval for the monitor
+DEFAULT_MONITOR_INTERVAL=0.25           # Default interval for the monitor
 DEFAULT_MONITOR_LOG_FILE="process_memory.log"
 
 # --- Helper Function ---
@@ -30,12 +30,13 @@ MONITOR_LOG_FILE="$DEFAULT_MONITOR_LOG_FILE"
 # Parse options for the monitor script itself
 # We need to separate these from the command to be executed.
 # A common convention is to use '--' to separate options from operands.
-APPEND_TO_LOG=false
+APPEND_TO_LOG="false"
 COMMAND_ARGS_START_INDEX=1
-while getopts ":i:o:" opt; do
+while getopts ":i:o:a" opt; do
     case ${opt} in
         i ) MONITOR_INTERVAL=$OPTARG ;;
         o ) MONITOR_LOG_FILE=$OPTARG ;;
+                a ) APPEND_TO_LOG="true" ;;
         \? ) echo "Invalid option for wrapper: -$OPTARG" >&2; usage ;;
         : ) echo "Option -$OPTARG requires an argument." >&2; usage ;;
     esac
@@ -51,16 +52,13 @@ fi
 for arg in "$@"; do
 if [ "$arg" == "-h" ]; then
     usage
-    exit 
-  fi
-  if [ "$arg" == "-a" ]; then
-    APPEND_TO_LOG=true
-    break # Optional: exit loop once found
-  fi
+    exit
+fi
 done
-if [ !APPEND_TO_LOG ]; then 
+if [ "$APPEND_TO_LOG" = false ]; then
     rm ${MONITOR_LOG_FILE}
 fi
+
 
 TARGET_COMMAND_WITH_ARGS=("$@")
 
