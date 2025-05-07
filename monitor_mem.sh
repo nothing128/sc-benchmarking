@@ -20,7 +20,7 @@ usage() {
 }
 
 cleanup() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - INFO: Memory monitor script (PID $$) stopping." | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Memory monitor script (PID $$) stopping." | tee -a "$LOG_FILE"
     rm -f "$MONITOR_PID_FILE"
     exit 0
 }
@@ -53,8 +53,8 @@ if [ ! -z "$TARGET_PID" ] && [ ! -z "$PROCESS_NAME" ]; then
     usage
 fi
 
-if ! [[ "$INTERVAL" =~ ^[0-9]+$ ]] || [ "$INTERVAL" -le 0 ]; then
-    echo "Error: Interval must be a positive integer."
+if  [ "$INTERVAL" -le 0 ]; then
+    echo "Error: Interval must be a positive number."
     usage
 fi
 
@@ -70,7 +70,7 @@ if [ ! -z "$PROCESS_NAME" ]; then
     fi
     # If multiple PIDs found, pick the first one (pgrep -o gives oldest)
     TARGET_PID=$(echo "$FOUND_PIDS" | head -n 1)
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - INFO: Resolved process name '$PROCESS_NAME' to PID $TARGET_PID." | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Resolved process name '$PROCESS_NAME' to PID $TARGET_PID." | tee -a "$LOG_FILE"
 fi
 
 # --- Main Logic ---
@@ -92,7 +92,7 @@ echo "Timestamp, PID, RSS (KB), VSZ (KB), %MEM, Command" >> "$LOG_FILE"
 while true; do
     # Check if the target process still exists
     if ! ps -p "$TARGET_PID" > /dev/null; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
+        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
         break # Exit the loop
     fi
 
@@ -107,13 +107,13 @@ while true; do
     MEM_INFO=$(ps -p "$TARGET_PID" -o pid,rss,vsz,pmem,comm --no-headers)
 
     if [ -n "$MEM_INFO" ]; then
-        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
         # Format for CSV-like output, removing leading/trailing whitespace from MEM_INFO
         LOG_ENTRY="$TIMESTAMP, $(echo "$MEM_INFO" | awk '{$1=$1;print}')"
         echo "$LOG_ENTRY" >> "$LOG_FILE"
     else
         # This case might occur if the process exits between the check and ps command
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - WARN: Could not retrieve memory info for PID $TARGET_PID. It might have just exited." | tee -a "$LOG_FILE"
+        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not retrieve memory info for PID $TARGET_PID. It might have just exited." | tee -a "$LOG_FILE"
         # Optional: break here if you want to stop monitoring immediately
     fi
 

@@ -1,8 +1,8 @@
-#!/bin/bash
+ult_#!/bin/bash
 
 # --- Configuration for the Wrapper ---
 MONITOR_SCRIPT_PATH="./monitor_mem.sh" # Path to your memory monitoring script
-DEFAULT_MONITOR_INTERVAL=0.25           # Default interval for the monitor
+DEFAULT_MONITOR_INTERVAL=0.5           # Default interval for the monitor
 DEFAULT_MONITOR_LOG_FILE="process_memory.log"
 
 # --- Helper Function ---
@@ -14,6 +14,8 @@ usage() {
     echo "Options for the monitor (before '--'):"
     echo "  -i <seconds>   Polling interval for memory monitor (default: ${DEFAULT_MONITOR_INTERVAL}s)"
     echo "  -o <file>      Log file for memory monitor (default: ${DEFAULT_MONITOR_LOG_FILE})"
+    echo "  -a             Append to the log file instead of overwriting it (default: false)"
+    echo "  -h             Displays this message"
     echo ""
     echo "Example:"
     echo "  $0 -i 1 -o my_app_mem.log -- /usr/bin/my_long_running_app --config /etc/app.conf"
@@ -28,7 +30,7 @@ MONITOR_LOG_FILE="$DEFAULT_MONITOR_LOG_FILE"
 # Parse options for the monitor script itself
 # We need to separate these from the command to be executed.
 # A common convention is to use '--' to separate options from operands.
-
+APPEND_TO_LOG=false
 COMMAND_ARGS_START_INDEX=1
 while getopts ":i:o:" opt; do
     case ${opt} in
@@ -44,6 +46,20 @@ shift $((OPTIND -1)) # Shift processed options out
 if [ "$#" -eq 0 ]; then
     echo "Error: No command specified to run."
     usage
+fi
+
+for arg in "$@"; do
+if [ "$arg" == "-h" ]; then
+    usage
+    exit 
+  fi
+  if [ "$arg" == "-a" ]; then
+    APPEND_TO_LOG=true
+    break # Optional: exit loop once found
+  fi
+done
+if [ !APPEND_TO_LOG ]; then 
+    rm ${MONITOR_LOG_FILE}
 fi
 
 TARGET_COMMAND_WITH_ARGS=("$@")
