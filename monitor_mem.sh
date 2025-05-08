@@ -106,7 +106,7 @@ while true; do
         TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
         # Format for CSV-like output, removing leading/trailing whitespace from MEM_INFO
         LOG_ENTRY="$TIMESTAMP, $(echo "$MEM_INFO" | awk '{$1=$1;print}')"
-        echo "$LOG_ENTRY" >> "$LOG_FILE"
+        stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
     else
         # This case might occur if the process exits between the check and ps command
         echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not retrieve memory info for PID $TARGET_PID. It might have just exited." | tee -a "$LOG_FILE"
