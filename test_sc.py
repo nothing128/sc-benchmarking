@@ -32,7 +32,7 @@ all_timers = []
 params = itertools.product(
     size_options, num_threads_options, subset_options, drop_X_options
 )
-with open(log_file, "w") as file:
+with open(log_file, "a") as file:
     
     for size, num_threads, subset, drop_X in params:
         file.write(f"STEP_INFO: Params: ${size,num_threads,subset,drop_X}") 
@@ -44,7 +44,7 @@ with open(log_file, "w") as file:
             data = SingleCell(
                 f'{data_dir}/SEAAD_raw_{size}.h5ad',
                 num_threads=num_threads)
-        file.write(f"STEP_INFO: Load Data Complete")
+        file.write("STEP_INFO: Load Data Complete\n")
         file.flush()
         print(f'X num_threads: {data.X._num_threads}')
 
@@ -60,7 +60,7 @@ with open(log_file, "w") as file:
                 allow_float=True,
                 verbose=False,
                 num_threads=num_threads)
-        file.write("STEP_INFO: Quaality control Complete")
+        file.write("STEP_INFO: Quaality control Complete\n")
         file.flush()
 
         # Not timed
@@ -78,25 +78,25 @@ with open(log_file, "w") as file:
                 batch_column='sample',
                 num_threads=num_threads)
             
-        file.write("STEP_INFO: Doublet detection Complete")
+        file.write("STEP_INFO: Doublet detection Complete\n")
         file.flush()
         print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 
         with timers('Feature selection'):
             data = data.hvg(
                 num_threads=num_threads)
-        file.write("STEP_INFO: Feature selection Complete")
+        file.write("STEP_INFO: Feature selection Complete\n")
         file.flush()
 
         with timers('Normalization'):
             data = data.normalize(
                 num_threads=num_threads)
-        file.write("STEP_INFO: Normalization Complete")
+        file.write("STEP_INFO: Normalization Complete\n")
         file.flush()
 
         with timers('PCA'):
             data = data.PCA(num_threads=num_threads)
-        file.write("STEP_INFO: PCA Complete")
+        file.write("STEP_INFO: PCA Complete\n")
         file.flush()
 
         # Not timed
@@ -109,11 +109,11 @@ with open(log_file, "w") as file:
         with timers('Neighbor graph'):
             with timers('KNN'):
                 data = data.neighbors(num_threads=num_threads)
-            file.write("STEP_INFO: KNN Complete")
+            file.write("STEP_INFO: KNN Complete\n")
             file.flush()
             with timers('SNN'):
                 data = data.shared_neighbors(num_threads=num_threads)
-            file.write("STEP_INFO: SNN Complete")
+            file.write("STEP_INFO: SNN Complete\n")
             file.flush()
 
         # TODO: The number of clusters needs to match across libraries
@@ -122,7 +122,7 @@ with open(log_file, "w") as file:
             data = data.cluster(
                 resolution=[1, 0.5, 2],
                 num_threads=num_threads)
-        file.write("STEP_INFO: Clustering Complete")
+        file.write("STEP_INFO: Clustering Complete\n")
         file.flush()
 
         print(f'cluster_0: {len(data.obs["cluster_0"].unique())}')
@@ -135,14 +135,14 @@ with open(log_file, "w") as file:
         with timers('Embedding'):
             data = data.embed(
                 num_threads=num_threads)
-        file.write("STEP_INFO: Embedding Complete")
+        file.write("STEP_INFO: Embedding Complete\n")
         file.flush()
 
         with timers('Plot embeddings'):
             data.plot_embedding(
                 'cluster_0',
                 f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
-        file.write("STEP_INFO: Plot embeddings Complete")
+        file.write("STEP_INFO: Plot embeddings Complete\n")
         file.flush()
 
         # Not timed
@@ -153,7 +153,7 @@ with open(log_file, "w") as file:
             markers = data.find_markers(
                 'cluster_0',
                 num_threads=num_threads)
-        file.write("STEP_INFO: Find markers Complete")
+        file.write("STEP_INFO: Find markers Complete\n")
         file.flush()
 
         # with timers('Save data'):
