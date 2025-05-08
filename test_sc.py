@@ -7,6 +7,7 @@ from single_cell import SingleCell
 
 work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
 data_dir = 'single-cell/SEAAD/subsampled'
+log_file = 'process_memory.log'
 
 os.makedirs(f'{work_dir}/output', exist_ok=True)
 os.makedirs(f'{work_dir}/figures', exist_ok=True)
@@ -23,7 +24,7 @@ size_options = ['20K', '400K', '1M']
 
 num_threads_options = [-1]
 subset_options = [True]
-drop_X_options = [True]
+drop_X_options = [False]
 size_options = ['20K']
 
 all_timers = []
@@ -31,127 +32,153 @@ all_timers = []
 params = itertools.product(
     size_options, num_threads_options, subset_options, drop_X_options
 )
+with open(log_file, "w") as file:
+    
+    for size, num_threads, subset, drop_X in params:
+        file.write(f"STEP_INFO: Params: ${size,num_threads,subset,drop_X}") 
+        file.flush()
+        timers = TimerCollection(silent=True)
 
-for size, num_threads, subset, drop_X in params:
-    timers = TimerCollection(silent=True)
+        # Note: Loading is much slower from $scratch disk
+        with timers('Load data'):
+            data = SingleCell(
+                f'{data_dir}/SEAAD_raw_{size}.h5ad',
+                num_threads=num_threads)
+        file.write(f"STEP_INFO: Load Data Complete")
+        file.flush()
+        print(f'X num_threads: {data.X._num_threads}')
 
-    # Note: Loading is much slower from $scratch disk
-    with timers('Load data'):
-        data = SingleCell(
-            f'{data_dir}/SEAAD_raw_{size}.h5ad',
-            num_threads=num_threads)
+        # Note: QC filters are matched across libraries for timing, then
+        # standardized by filtering to single_cell.py qc cells
+        with timers('Quality control'):
+            data.qc(
+                subset=subset,
+                max_mito_fraction=0.05,
+                min_genes=100,
+                nonzero_MALAT1=False,
+                remove_doublets=False,
+                allow_float=True,
+                verbose=False,
+                num_threads=num_threads)
+        file.write("STEP_INFO: Quaality control Complete")
+        file.flush()
 
-    print(f'X num_threads: {data.X._num_threads}')
+        # Not timed
+        if subset:
+            data = data\
+                .filter_obs(pl.col('tmp_passed_QC'))\
+                .with_uns(QCed=True)
+        else:
+            data = data\
+                .rename_obs({'tmp_passed_QC': 'passed_QC'})\
+                .with_uns(QCed=True)
 
-    # Note: QC filters are matched across libraries for timing, then
-    # standardized by filtering to single_cell.py qc cells
-    with timers('Quality control'):
-        data.qc(
-            subset=subset,
-            max_mito_fraction=0.05,
-            min_genes=100,
-            nonzero_MALAT1=False,
-            remove_doublets=False,
-            allow_float=True,
-            verbose=False,
-            num_threads=num_threads)
+        with timers('Doublet detection'):
+            data = data.find_doublets(
+                batch_column='sample',
+                num_threads=num_threads)
+            
+        file.write("STEP_INFO: Doublet detection Complete")
+        file.flush()
+        print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 
-    # Not timed
-    if subset:
-        data = data\
-            .filter_obs(pl.col('tmp_passed_QC'))\
-            .with_uns(QCed=True)
-    else:
-        data = data\
-            .rename_obs({'tmp_passed_QC': 'passed_QC'})\
-            .with_uns(QCed=True)
+        with timers('Feature selection'):
+            data = data.hvg(
+                num_threads=num_threads)
+        file.write("STEP_INFO: Feature selection Complete")
+        file.flush()
 
-    with timers('Doublet detection'):
-        data = data.find_doublets(
-            batch_column='sample',
-            num_threads=num_threads)
+        with timers('Normalization'):
+            data = data.normalize(
+                num_threads=num_threads)
+        file.write("STEP_INFO: Normalization Complete")
+        file.flush()
 
-    print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
+        with timers('PCA'):
+            data = data.PCA(num_threads=num_threads)
+        file.write("STEP_INFO: PCA Complete")
+        file.flush()
 
-    with timers('Feature selection'):
-        data = data.hvg(
-            num_threads=num_threads)
+        # Not timed
+        if not subset:
+            data = data.filter_obs(pl.col('passed_QC'))
+        if drop_X:
+            X_copy = data.X.copy()
+            data = data.drop_X()
 
-    with timers('Normalization'):
-        data = data.normalize(
-            num_threads=num_threads)
+        with timers('Neighbor graph'):
+            with timers('KNN'):
+                data = data.neighbors(num_threads=num_threads)
+            file.write("STEP_INFO: KNN Complete")
+            file.flush()
+            with timers('SNN'):
+                data = data.shared_neighbors(num_threads=num_threads)
+            file.write("STEP_INFO: SNN Complete")
+            file.flush()
 
-    with timers('PCA'):
-        data = data.PCA(num_threads=num_threads)
+        # TODO: The number of clusters needs to match across libraries
 
-    # Not timed
-    if not subset:
-        data = data.filter_obs(pl.col('passed_QC'))
-    if drop_X:
-        X_copy = data.X.copy()
-        data = data.drop_X()
+        with timers('Clustering (3 resolutions)'):
+            data = data.cluster(
+                resolution=[1, 0.5, 2],
+                num_threads=num_threads)
+        file.write("STEP_INFO: Clustering Complete")
+        file.flush()
 
-    with timers('Neighbor graph'):
-        with timers('KNN'):
-            data = data.neighbors(num_threads=num_threads)
-        with timers('SNN'):
-            data = data.shared_neighbors(num_threads=num_threads)
+        print(f'cluster_0: {len(data.obs["cluster_0"].unique())}')
+        print(f'cluster_1: {len(data.obs["cluster_1"].unique())}')
+        print(f'cluster_2: {len(data.obs["cluster_2"].unique())}')
 
-    # TODO: The number of clusters needs to match across libraries
+        # TODO: Swap neighbor graphs with scanpy to assess
+        # embedding differences
 
-    with timers('Clustering (3 resolutions)'):
-        data = data.cluster(
-            resolution=[1, 0.5, 2],
-            num_threads=num_threads)
+        with timers('Embedding'):
+            data = data.embed(
+                num_threads=num_threads)
+        file.write("STEP_INFO: Embedding Complete")
+        file.flush()
 
-    print(f'cluster_0: {len(data.obs["cluster_0"].unique())}')
-    print(f'cluster_1: {len(data.obs["cluster_1"].unique())}')
-    print(f'cluster_2: {len(data.obs["cluster_2"].unique())}')
+        with timers('Plot embeddings'):
+            data.plot_embedding(
+                'cluster_0',
+                f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
+        file.write("STEP_INFO: Plot embeddings Complete")
+        file.flush()
 
-    # TODO: Swap neighbor graphs with scanpy to assess
-    # embedding differences
+        # Not timed
+        if drop_X:
+            data.X = X_copy
 
-    with timers('Embedding'):
-        data = data.embed(
-            num_threads=num_threads)
+        with timers('Find markers'):
+            markers = data.find_markers(
+                'cluster_0',
+                num_threads=num_threads)
+        file.write("STEP_INFO: Find markers Complete")
+        file.flush()
 
-    with timers('Plot embeddings'):
-        data.plot_embedding(
-            'cluster_0',
-            f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
+        # with timers('Save data'):
+        #    data.save(
+        #        f'{data_dir}/test_write.h5ad',
+        #        overwrite=True)
 
-    # Not timed
-    if drop_X:
-        data.X = X_copy
+        # Not timed
+        # os.remove(f'{data_dir}/test_write.h5ad')
 
-    with timers('Find markers'):
-        markers = data.find_markers(
-            'cluster_0',
-            num_threads=num_threads)
+        print('--- Params ---')
+        print(f'{size=}, {num_threads=}, {subset=}, {drop_X=}')
+        timers.print_summary(sort=False)
 
-    # with timers('Save data'):
-    #    data.save(
-    #        f'{data_dir}/test_write.h5ad',
-    #        overwrite=True)
+        df = timers\
+            .to_dataframe(sort=False, unit='s')\
+            .with_columns(
+                pl.lit('basic').alias('vignette'),
+                pl.lit(size).alias('size'),
+                pl.lit(num_threads).alias('num_threads'),
+                pl.lit(subset).alias('subset'),
+                pl.lit(drop_X).alias('drop_X'))
 
-    # Not timed
-    # os.remove(f'{data_dir}/test_write.h5ad')
-
-    print('--- Params ---')
-    print(f'{size=}, {num_threads=}, {subset=}, {drop_X=}')
-    timers.print_summary(sort=False)
-
-    df = timers\
-        .to_dataframe(sort=False, unit='s')\
-        .with_columns(
-            pl.lit('basic').alias('vignette'),
-            pl.lit(size).alias('size'),
-            pl.lit(num_threads).alias('num_threads'),
-            pl.lit(subset).alias('subset'),
-            pl.lit(drop_X).alias('drop_X'))
-
-    all_timers.append(df)
-    del data, timers, df; gc.collect()
+        all_timers.append(df)
+        del data, timers, df; gc.collect()
 
 timers_df = pl.concat(all_timers)
 timers_df.write_csv(f'{work_dir}/output/test_basic_sc_all.csv')
