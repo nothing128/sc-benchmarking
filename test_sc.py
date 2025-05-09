@@ -35,7 +35,7 @@ params = itertools.product(
 with open(log_file, "a") as file:
 
     for size, num_threads, subset, drop_X in params:
-        file.write(f"LOOP_INFO: Iteration Start Params: ${size,num_threads,subset,drop_X}") 
+        file.write(f"LOOP_INFO: Iteration Start Params: ${size,num_threads,subset,drop_X}\n") 
         file.flush()
         timers = TimerCollection(silent=True)
 
