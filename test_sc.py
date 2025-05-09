@@ -25,7 +25,7 @@ size_options = ['20K', '400K', '1M']
 num_threads_options = [-1]
 subset_options = [True]
 drop_X_options = [False]
-size_options = ['20K']
+size_options = ['20K', '400K']
 
 all_timers = []
 
@@ -33,7 +33,7 @@ params = itertools.product(
     size_options, num_threads_options, subset_options, drop_X_options
 )
 with open(log_file, "a") as file:
-    
+
     for size, num_threads, subset, drop_X in params:
         file.write(f"LOOP_INFO: Iteration Start Params: ${size,num_threads,subset,drop_X}") 
         file.flush()
@@ -77,7 +77,7 @@ with open(log_file, "a") as file:
             data = data.find_doublets(
                 batch_column='sample',
                 num_threads=num_threads)
-            
+
         file.write("STEP_INFO: Doublet detection Complete\n")
         file.flush()
         print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
