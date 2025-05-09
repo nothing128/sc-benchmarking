@@ -35,7 +35,7 @@ params = itertools.product(
 with open(log_file, "a") as file:
 
     for size, num_threads, subset, drop_X in params:
-        file.write(f"LOOP_INFO: Iteration Start Params: ${size,num_threads,subset,drop_X}\n") 
+        file.write(f"LOOP_INFO: Iteration Start Params: {size,num_threads,subset,drop_X}\n") 
         file.flush()
         timers = TimerCollection(silent=True)
 
@@ -179,7 +179,7 @@ with open(log_file, "a") as file:
 
         all_timers.append(df)
         del data, timers, df; gc.collect()
-        file.write(f"LOOP_INFO: Iteration End Params: ${size,num_threads,subset,drop_X} \n")
+        file.write(f"LOOP_INFO: Iteration End Params: {size,num_threads,subset,drop_X} \n")
         file.flush()
 
 timers_df = pl.concat(all_timers)
