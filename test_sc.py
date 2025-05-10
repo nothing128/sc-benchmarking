@@ -55,7 +55,7 @@ with open(log_file, "a") as file:
                 allow_float=True,
                 verbose=False,
                 num_threads=num_threads)
-        file.write("STEP_INFO: Quaality control Complete\n")
+        file.write("STEP_INFO: Quality control Complete\n")
         file.flush()
 
         # Not timed

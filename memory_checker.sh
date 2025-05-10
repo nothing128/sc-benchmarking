@@ -2,7 +2,7 @@
 
 # --- Configuration for the Wrapper ---
 MONITOR_SCRIPT_PATH="./monitor_mem.sh" # Path to your memory monitoring script
-DEFAULT_MONITOR_INTERVAL=0.25           # Default interval for the monitor
+DEFAULT_MONITOR_INTERVAL=0.1           # Default interval for the monitor
 DEFAULT_MONITOR_LOG_FILE="process_memory.log"
 
 # --- Helper Function ---
