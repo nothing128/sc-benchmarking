@@ -22,11 +22,6 @@ subset_options = [True, False]
 drop_X_options = [True, False]
 size_options = ['20K', '400K', '1M']
 
-num_threads_options = [-1]
-subset_options = [True]
-drop_X_options = [False]
-size_options = ['20K', '400K']
-
 all_timers = []
 
 params = itertools.product(

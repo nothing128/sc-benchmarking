@@ -7,8 +7,8 @@ data_dir = "single-cell/SEAAD/subsampled"
 
 
 def parse_log(log_file: str, out: str):
-    path = os.path.join(work_dir, log_file)
-    # path = log_file  # for local testing
+    # path = os.path.join(work_dir, log_file)
+    path = log_file  # for local testing
     with open(path, "r") as f:
         next(f)
         next(f)
