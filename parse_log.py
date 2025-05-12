@@ -19,9 +19,6 @@ def parse_log(log_file: str, out: str):
             output.write(
                 "INFO: Note that if memory used is -1.0, it means the step completed too quickly and no memory check has been run during the step\n"
             )
-            output.write(
-                "INFO: RSS, VSZ is in KB\n"
-            )
 
             while curr_line != "":  # read until EOF
                 if curr_line[0] == "L":
@@ -37,7 +34,7 @@ def parse_log(log_file: str, out: str):
                         else:
                             step_name = curr_line.split(": ")[1].split(" C")[0]
                             max_mem = np.max(mem, axis=0)
-                            output.write(f"\t{step_name}:\n\t\tRSS: {int(max_mem[0])}, VSZ: {int(max_mem[1])}, %MEM: {max_mem[2]}\n\n")
+                            output.write(f"{step_name}: {int(max_mem[0])} KB ({max_mem[2]})\n")
                             mem = np.array([[-1.0, -1.0, -1.0]])
                         curr_line = f.readline()
 
