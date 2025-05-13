@@ -34,7 +34,7 @@ def parse_log(log_file: str, out: str):
                         else:
                             step_name = curr_line.split(": ")[1].split(" C")[0]
                             max_mem = np.max(mem, axis=0)
-                            output.write(f"{step_name}: {int(max_mem[0])} KB ({max_mem[2]})\n")
+                            output.write(f"{step_name}: {int(max_mem[0])} KB ({max_mem[2]}%)\n")
                             mem = np.array([[-1.0, -1.0, -1.0]])
                         curr_line = f.readline()
 
