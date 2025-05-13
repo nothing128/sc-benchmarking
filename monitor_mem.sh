@@ -53,7 +53,7 @@ if [ ! -z "$TARGET_PID" ] && [ ! -z "$PROCESS_NAME" ]; then
     usage
 fi
 
-
+rm "$LOG_FILE"
 # --- Resolve Process Name to PID if necessary ---
 if [ ! -z "$PROCESS_NAME" ]; then
     # pgrep: -f matches against full argument list, -x for exact match (optional)
