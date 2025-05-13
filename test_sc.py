@@ -22,9 +22,9 @@ from utils_local import TimerCollection, system_info
 
 system_info()
 
-num_threads_options = [-1, 1]
+num_threads_options = [-1]
 subset_options = [True, False]
-drop_X_options = [True, False]
+drop_X_options = [False]
 size_options = ['20K', '400K', '1M']
 size_options = ['20K']
 all_timers = []
