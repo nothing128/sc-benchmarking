@@ -45,7 +45,7 @@ with open(log_file, "a") as file:
             data = SingleCell(
                 f'{data_dir}/SEAAD_raw_{size}.h5ad',
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Load Data Complete\n")
         file.flush()
@@ -64,7 +64,7 @@ with open(log_file, "a") as file:
                 allow_float=True,
                 verbose=False,
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Quality control Complete\n")
         file.flush()
@@ -83,7 +83,7 @@ with open(log_file, "a") as file:
             data = data.find_doublets(
                 batch_column='sample',
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Doublet detection Complete\n")
         file.flush()
@@ -93,7 +93,7 @@ with open(log_file, "a") as file:
         with timers('Feature selection'):
             data = data.hvg(
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Feature selection Complete\n")
         file.flush()
@@ -102,7 +102,7 @@ with open(log_file, "a") as file:
         with timers('Normalization'):
             data = data.normalize(
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Normalization Complete\n")
         file.flush()
@@ -110,7 +110,7 @@ with open(log_file, "a") as file:
         curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('PCA'):
             data = data.PCA(num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: PCA Complete\n")
         file.flush()
@@ -126,7 +126,7 @@ with open(log_file, "a") as file:
             curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
             with timers('KNN'):
                 data = data.neighbors(num_threads=num_threads)
-            subprocess.run(["kill", curr_process.pid])
+            subprocess.run(["kill", str(curr_process.pid)])
             curr_process = None
             file.write("STEP_INFO: KNN Complete\n")
             file.flush()
@@ -134,7 +134,7 @@ with open(log_file, "a") as file:
             curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
             with timers('SNN'):
                 data = data.shared_neighbors(num_threads=num_threads)
-            subprocess.run(["kill", curr_process.pid])
+            subprocess.run(["kill", str(curr_process.pid)])
             curr_process = None
             file.write("STEP_INFO: SNN Complete\n")
             file.flush()
@@ -145,7 +145,7 @@ with open(log_file, "a") as file:
             data = data.cluster(
                 resolution=[1, 0.5, 2],
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Clustering Complete\n")
         file.flush()
@@ -160,7 +160,7 @@ with open(log_file, "a") as file:
         with timers('Embedding'):
             data = data.embed(
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Embedding Complete\n")
         file.flush()
@@ -170,7 +170,7 @@ with open(log_file, "a") as file:
             data.plot_embedding(
                 'cluster_0',
                 f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Plot embeddings Complete\n")
         file.flush()
@@ -183,7 +183,7 @@ with open(log_file, "a") as file:
             markers = data.find_markers(
                 'cluster_0',
                 num_threads=num_threads)
-        subprocess.run(["kill", curr_process.pid])
+        subprocess.run(["kill", str(curr_process.pid)])
         curr_process = None
         file.write("STEP_INFO: Find markers Complete\n")
         file.flush()
