@@ -20,7 +20,6 @@ usage() {
 }
 
 cleanup() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Memory monitor script (PID $$) stopping." | tee -a "$LOG_FILE"
     rm -f "$MONITOR_PID_FILE"
     exit 0
 }
