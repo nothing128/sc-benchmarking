@@ -39,7 +39,7 @@ with open(log_file, "a") as file:
         timers = TimerCollection(silent=True)
 
         # Note: Loading is much slower from $scratch disk
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Load data'):
             data = SingleCell(
                 f'{data_dir}/SEAAD_raw_{size}.h5ad',
@@ -52,7 +52,7 @@ with open(log_file, "a") as file:
 
         # Note: QC filters are matched across libraries for timing, then
         # standardized by filtering to single_cell.py qc cells
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Quality control'):
             data.qc(
                 subset=subset,
@@ -77,7 +77,7 @@ with open(log_file, "a") as file:
             data = data\
                 .rename_obs({'tmp_passed_QC': 'passed_QC'})\
                 .with_uns(QCed=True)
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Doublet detection'):
             data = data.find_doublets(
                 batch_column='sample',
@@ -88,7 +88,7 @@ with open(log_file, "a") as file:
         file.flush()
 
         print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Feature selection'):
             data = data.hvg(
                 num_threads=num_threads)
@@ -97,7 +97,7 @@ with open(log_file, "a") as file:
         file.write("STEP_INFO: Feature selection Complete\n")
         file.flush()
         
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Normalization'):
             data = data.normalize(
                 num_threads=num_threads)
@@ -106,7 +106,7 @@ with open(log_file, "a") as file:
         file.write("STEP_INFO: Normalization Complete\n")
         file.flush()
         
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('PCA'):
             data = data.PCA(num_threads=num_threads)
         subprocess.run(["kill", curr_process.pid])
@@ -122,7 +122,7 @@ with open(log_file, "a") as file:
             data = data.drop_X()
 
         with timers('Neighbor graph'):
-            curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+            curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
             with timers('KNN'):
                 data = data.neighbors(num_threads=num_threads)
             subprocess.run(["kill", curr_process.pid])
@@ -130,7 +130,7 @@ with open(log_file, "a") as file:
             file.write("STEP_INFO: KNN Complete\n")
             file.flush()
 
-            curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+            curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
             with timers('SNN'):
                 data = data.shared_neighbors(num_threads=num_threads)
             subprocess.run(["kill", curr_process.pid])
@@ -139,7 +139,7 @@ with open(log_file, "a") as file:
             file.flush()
 
         # TODO: The number of clusters needs to match across libraries
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Clustering (3 resolutions)'):
             data = data.cluster(
                 resolution=[1, 0.5, 2],
@@ -155,7 +155,7 @@ with open(log_file, "a") as file:
 
         # TODO: Swap neighbor graphs with scanpy to assess
         # embedding differences
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Embedding'):
             data = data.embed(
                 num_threads=num_threads)
@@ -164,7 +164,7 @@ with open(log_file, "a") as file:
         file.write("STEP_INFO: Embedding Complete\n")
         file.flush()
 
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Plot embeddings'):
             data.plot_embedding(
                 'cluster_0',
@@ -177,7 +177,7 @@ with open(log_file, "a") as file:
         # Not timed
         if drop_X:
             data.X = X_copy
-        curr_process = subprocess.Popen(["./monitor_mem.sh", pid], shell=False)
+        curr_process = subprocess.Popen(["./monitor_mem.sh", str(pid)], shell=False)
         with timers('Find markers'):
             markers = data.find_markers(
                 'cluster_0',
