@@ -17,7 +17,8 @@ os.makedirs(f'{work_dir}/figures', exist_ok=True)
 sys.path.append(work_dir)
 
 # temp implementation for now, can add args to allow appending later
-os.remove(log_file)
+if os.path.exists(log_file):
+    os.remove(log_file)
 
 from utils_local import TimerCollection, system_info
 

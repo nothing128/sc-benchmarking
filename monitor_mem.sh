@@ -78,7 +78,7 @@ fi
 
 # Store the PID of this monitoring script
 echo $$ > "$MONITOR_PID_FILE"
-trap cleanup SIGINT SIGTERM EXIT # Call cleanup on script exit or interruption
+trap cleanup SIGINT SIGTERM # Call cleanup on script exit or interruption
 
 echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Starting memory monitor for PID $TARGET_PID (Interval: ${INTERVAL}s, Log: ${LOG_FILE})" | tee -a "$LOG_FILE"
 echo "Starting log at $(date '+%Y-%m-%d %H:%M:%S:%N')" >> "$LOG_FILE"
@@ -88,7 +88,7 @@ while true; do
     # Check if the target process still exists
     if ! ps -p "$TARGET_PID" > /dev/null; then
         echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
-        break # Exit the loop
+        cleanup
     fi
 
     # Get memory info using ps
