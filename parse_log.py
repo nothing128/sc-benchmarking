@@ -10,9 +10,6 @@ def parse_log(log_file: str, out: str):
     # path = os.path.join(work_dir, log_file)
     path = log_file  # for local testing
     with open(path, "r") as f:
-        next(f)
-        next(f)
-        next(f)  # skip INFO/header
         curr_line = f.readline()
         with open(out, "w") as output:
             output.write("Summary of memory usage per step\n")
