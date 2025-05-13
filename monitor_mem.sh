@@ -79,11 +79,16 @@ fi
 echo $$ > "$MONITOR_PID_FILE"
 trap cleanup SIGINT SIGTERM EXIT # Call cleanup on script exit or interruption
 
-echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Starting memory monitor for PID $TARGET_PID (Interval: ${INTERVAL}s, Log: ${LOG_FILE})" | tee -a "$LOG_FILE"
-echo "Starting log at $(date '+%Y-%m-%d %H:%M:%S:%N')" >> "$LOG_FILE"
-echo "Timestamp, PID, RSS (KB), VSZ (KB), %MEM, Command" >> "$LOG_FILE"
-
+# echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Starting memory monitor for PID $TARGET_PID (Interval: ${INTERVAL}s, Log: ${LOG_FILE})" | tee -a "$LOG_FILE"
+# echo "Starting log at $(date '+%Y-%m-%d %H:%M:%S:%N')" >> "$LOG_FILE"
+# echo "Timestamp, PID, RSS (KB), VSZ (KB), %MEM, Command" >> "$LOG_FILE"
+MEM_INFO=$(ps -p "$TARGET_PID" -o pid,rss,vsz,pmem,comm --no-headers)
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
+# Format for CSV-like output, removing leading/trailing whitespace from MEM_INFO
+LOG_ENTRY="$TIMESTAMP, $(echo "$MEM_INFO" | awk '{$1=$1;print}')"
+stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
 while true; do
+    sleep "$INTERVAL"
     # Check if the target process still exists
     if ! ps -p "$TARGET_PID" > /dev/null; then
         echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
@@ -111,7 +116,7 @@ while true; do
         # Optional: break here if you want to stop monitoring immediately
     fi
 
-    sleep "$INTERVAL"
+    
 done
 
 # Cleanup is handled by the trap
