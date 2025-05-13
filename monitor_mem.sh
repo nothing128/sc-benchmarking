@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- Configuration ---
-DEFAULT_INTERVAL=5       # seconds
+DEFAULT_INTERVAL=0.25       # seconds
 DEFAULT_LOG_FILE="memory_monitor.log"
 MONITOR_PID_FILE="/tmp/memory_monitor_script.pid" # PID of this monitoring script
 
