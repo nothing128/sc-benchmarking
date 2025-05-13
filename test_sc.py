@@ -27,7 +27,6 @@ subset_options = [True, False]
 drop_X_options = [True, False]
 size_options = ['20K', '400K', '1M']
 size_options = ['20K']
-
 all_timers = []
 
 params = itertools.product(
@@ -48,7 +47,9 @@ with open(log_file, "a") as file:
                 f'{data_dir}/SEAAD_raw_{size}.h5ad',
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
+        
         file.write("STEP_INFO: Load Data Complete\n")
         file.flush()
         print(f'X num_threads: {data.X._num_threads}')
@@ -67,6 +68,7 @@ with open(log_file, "a") as file:
                 verbose=False,
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Quality control Complete\n")
         file.flush()
@@ -86,6 +88,7 @@ with open(log_file, "a") as file:
                 batch_column='sample',
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Doublet detection Complete\n")
         file.flush()
@@ -96,6 +99,7 @@ with open(log_file, "a") as file:
             data = data.hvg(
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Feature selection Complete\n")
         file.flush()
@@ -105,6 +109,7 @@ with open(log_file, "a") as file:
             data = data.normalize(
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Normalization Complete\n")
         file.flush()
@@ -113,6 +118,7 @@ with open(log_file, "a") as file:
         with timers('PCA'):
             data = data.PCA(num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: PCA Complete\n")
         file.flush()
@@ -129,6 +135,7 @@ with open(log_file, "a") as file:
             with timers('KNN'):
                 data = data.neighbors(num_threads=num_threads)
             subprocess.run(["kill", str(curr_process.pid)])
+            curr_process.wait()
             curr_process = None
             file.write("STEP_INFO: KNN Complete\n")
             file.flush()
@@ -137,6 +144,7 @@ with open(log_file, "a") as file:
             with timers('SNN'):
                 data = data.shared_neighbors(num_threads=num_threads)
             subprocess.run(["kill", str(curr_process.pid)])
+            curr_process.wait()
             curr_process = None
             file.write("STEP_INFO: SNN Complete\n")
             file.flush()
@@ -148,6 +156,7 @@ with open(log_file, "a") as file:
                 resolution=[1, 0.5, 2],
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Clustering Complete\n")
         file.flush()
@@ -163,6 +172,7 @@ with open(log_file, "a") as file:
             data = data.embed(
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Embedding Complete\n")
         file.flush()
@@ -173,6 +183,7 @@ with open(log_file, "a") as file:
                 'cluster_0',
                 f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Plot embeddings Complete\n")
         file.flush()
@@ -186,6 +197,7 @@ with open(log_file, "a") as file:
                 'cluster_0',
                 num_threads=num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
+        curr_process.wait()
         curr_process = None
         file.write("STEP_INFO: Find markers Complete\n")
         file.flush()
