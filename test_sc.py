@@ -9,7 +9,7 @@ import subprocess
 
 work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
 data_dir = 'single-cell/SEAAD/subsampled'
-log_file = 'process_memory.log'
+log_file = 'memory_monitor.log'
 
 os.makedirs(f'{work_dir}/output', exist_ok=True)
 os.makedirs(f'{work_dir}/figures', exist_ok=True)
