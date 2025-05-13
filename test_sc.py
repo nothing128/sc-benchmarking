@@ -15,6 +15,9 @@ os.makedirs(f'{work_dir}/output', exist_ok=True)
 os.makedirs(f'{work_dir}/figures', exist_ok=True)
 sys.path.append(work_dir)
 
+# temp implementation for now, can add args to allow appending later
+os.remove(log_file)
+
 from utils_local import TimerCollection, system_info
 
 system_info()
@@ -31,7 +34,6 @@ params = itertools.product(
     size_options, num_threads_options, subset_options, drop_X_options
 )
 pid = os.getpid()
-
 with open(log_file, "a") as file:
 
     for size, num_threads, subset, drop_X in params:
