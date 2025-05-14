@@ -38,7 +38,7 @@ pid = os.getpid()
 with open(log_file, "a") as file:
 
     for size, num_threads, subset, drop_X in params:
-        file.write(f"LOOP_INFO: Iteration Start Params: (size: {size},num_thread: {num_threads},subset: {subset},drop_X: {drop_X})\n") 
+        file.write(f"LOOP_INFO: Iteration Start Params: (size: {size},num_thread: {num_threads},subset: {subset},drop_X: {drop_X})\n")
         file.flush()
         timers = TimerCollection(silent=True)
 
@@ -52,7 +52,7 @@ with open(log_file, "a") as file:
         subprocess.run(["kill", str(curr_process.pid)])
         curr_process.wait()
         curr_process = None
-        
+
         file.write("STEP_INFO: Load Data Complete\n")
         file.flush()
         print(f'X num_threads: {data.X._num_threads}')
@@ -109,7 +109,7 @@ with open(log_file, "a") as file:
         curr_process = None
         file.write("STEP_INFO: Feature selection Complete\n")
         file.flush()
-        
+
         curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
         time.sleep(delay)
         with timers('Normalization'):
@@ -120,7 +120,7 @@ with open(log_file, "a") as file:
         curr_process = None
         file.write("STEP_INFO: Normalization Complete\n")
         file.flush()
-        
+
         curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
         time.sleep(delay)
         with timers('PCA'):
