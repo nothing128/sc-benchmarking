@@ -135,7 +135,7 @@ while true; do
 
             TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
             # Log: Timestamp, PID, Summed_RSS, VmSize, %MEM, Command
-            LOG_ENTRY="$TIMESTAMP,$P_PID,$P_RSS_SUM,$P_VSZ,$PERCENT_MEM,$P_COMM"
+            LOG_ENTRY="$TIMESTAMP, $P_PID $P_RSS_SUM $P_VSZ $PERCENT_MEM $P_COMM"
             stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
         else
             echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
