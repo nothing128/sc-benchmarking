@@ -99,17 +99,50 @@ while true; do
     # args: Full command with arguments (can be very long)
     # We'll use 'comm' for brevity, but 'args' might be more informative.
     # --no-headers: Don't print the header line
-    MEM_INFO=$(ps -p "$TARGET_PID" -o pid,rss,vsz,pmem,comm --no-headers)
+    if [ -f "/proc/$TARGET_PID/status" ]; then
+        # Use awk to parse /proc/$TARGET_PID/status
+        # RssAnon, RssFile, RssShmem are in KiB. VmSize is also in KiB.
+        PROC_MEM_INFO=$(awk '
+            BEGIN {
+                rss_anon=0; rss_file=0; rss_shmem=0; # Initialize to 0 in case some are not present
+                vm_size=0; name="N/A"; pid_val="N/A";
+            }
+            /^Pid:/ {pid_val=$2}
+            /^Name:/ {name=$2}        # This is the command name
+            /^VmSize:/ {vm_size=$2}   # Virtual memory size (like VSZ)
+            /^RssAnon:/ {rss_anon=$2}
+            /^RssFile:/ {rss_file=$2}
+            /^RssShmem:/ {rss_shmem=$2}
+            END {
+                rss_sum = rss_anon + rss_file + rss_shmem;
+                # Output: PID, Calculated_RSS_Sum, VmSize, CommandName
+                print pid_val, rss_sum, vm_size, name;
+            }
+        ' "/proc/$TARGET_PID/status" 2>/dev/null) # Redirect stderr for race conditions
 
-    if [ -n "$MEM_INFO" ]; then
-        TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
-        # Format for CSV-like output, removing leading/trailing whitespace from MEM_INFO
-        LOG_ENTRY="$TIMESTAMP, $(echo "$MEM_INFO" | awk '{$1=$1;print}')"
-        stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
+        if [ -n "$PROC_MEM_INFO" ]; then
+            # Read the parsed values into separate variables
+            read -r P_PID P_RSS_SUM P_VSZ P_COMM <<< "$PROC_MEM_INFO"
+
+            # Calculate %MEM manually
+            # Get total system memory in KiB
+            TOTAL_MEM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+            PERCENT_MEM="0.0" # Default
+            if [ "$TOTAL_MEM_KB" -gt 0 ] && [ "$P_RSS_SUM" -gt 0 ]; then
+                # Use awk for floating point division
+                PERCENT_MEM=$(awk -v rss="$P_RSS_SUM" -v total="$TOTAL_MEM_KB" 'BEGIN {printf "%.1f", (rss/total)*100}')
+            fi
+
+            TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
+            # Log: Timestamp, PID, Summed_RSS, VmSize, %MEM, Command
+            LOG_ENTRY="$TIMESTAMP,$P_PID,$P_RSS_SUM,$P_VSZ,$PERCENT_MEM,$P_COMM"
+            stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
+        else
+            echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
+        fi
     else
-        # This case might occur if the process exits between the check and ps command
-        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not retrieve memory info for PID $TARGET_PID. It might have just exited." | tee -a "$LOG_FILE"
-        # Optional: break here if you want to stop monitoring immediately
+        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Process PID $TARGET_PID no longer running. Exiting." | tee -a "$LOG_FILE"
+        break # Exit the loop if the process is gone
     fi
 
     sleep "$INTERVAL"
