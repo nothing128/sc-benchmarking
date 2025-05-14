@@ -85,56 +85,63 @@ echo "Starting log at $(date '+%Y-%m-%d %H:%M:%S:%N')" >> "$LOG_FILE"
 echo "Timestamp, PID, RSS (KB), VSZ (KB), %MEM, Command" >> "$LOG_FILE"
 
 while true; do
-    SMAPS_ROLLUP_FILE="/proc/$TARGET_PID/smaps_rollup"
-    STATUS_FILE="/proc/$TARGET_PID/status"
+    # Check if the target process still exists
+    if ! ps -p "$TARGET_PID" > /dev/null; then
+        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
+        cleanup
+    fi
 
-    # Check if process and its necessary proc files exist
-    if [ -f "$SMAPS_ROLLUP_FILE" ] && [ -f "$STATUS_FILE" ]; then
+    # Get memory info using ps
+    # rss: Resident Set Size (physical memory, usually in KB)
+    # vsz: Virtual Memory Size (virtual memory, usually in KB)
+    # %mem: Percentage of physical memory used
+    # comm: Command name (without arguments)
+    # args: Full command with arguments (can be very long)
+    # We'll use 'comm' for brevity, but 'args' might be more informative.
+    # --no-headers: Don't print the header line
+    if [ -f "/proc/$TARGET_PID/status" ]; then
+        # Use awk to parse /proc/$TARGET_PID/status
+        # RssAnon, RssFile, RssShmem are in KiB. VmSize is also in KiB.
+        PROC_MEM_INFO=$(awk '
+            BEGIN {
+                rss_anon=0; rss_file=0; rss_shmem=0; # Initialize to 0 in case some are not present
+                vm_size=0; name="N/A"; pid_val="N/A";
+            }
+            /^Pid:/ {pid_val=$2}
+            /^Name:/ {name=$2}        # This is the command name
+            /^VmSize:/ {vm_size=$2}   # Virtual memory size (like VSZ)
+            /^RssAnon:/ {rss_anon=$2}
+            /^RssFile:/ {rss_file=$2}
+            /^RssShmem:/ {rss_shmem=$2}
+            END {
+                rss_sum = rss_anon + rss_file + rss_shmem;
+                # Output: PID, Calculated_RSS_Sum, VmSize, CommandName
+                print pid_val, rss_sum, vm_size, name;
+            }
+        ' "/proc/$TARGET_PID/status" 2>/dev/null) # Redirect stderr for race conditions
 
-        # Get RssAnon, RssFile, RssShmem from smaps_rollup and sum them
-        RSS_COMPONENTS=$(awk '
-            BEGIN { anon=0; file=0; shmem=0; } # Initialize
-            /^RssAnon:/ {anon=$2}
-            /^RssFile:/ {file=$2}
-            /^RssShmem:/ {shmem=$2}
-            END { print anon, file, shmem }
-        ' "$SMAPS_ROLLUP_FILE" 2>/dev/null) # Redirect stderr for race conditions
+        if [ -n "$PROC_MEM_INFO" ]; then
+            # Read the parsed values into separate variables
+            read -r P_PID P_RSS_SUM P_VSZ P_COMM <<< "$PROC_MEM_INFO"
 
-        # Get VmSize and Name from status file
-        VMSIZE_AND_NAME=$(awk '
-            BEGIN { vmsize="N/A"; name="N/A"; } # Initialize
-            /^VmSize:/ {vmsize=$2}
-            /^Name:/ {name=$2}
-            END { print vmsize, name }
-        ' "$STATUS_FILE" 2>/dev/null)
-
-        if [ -n "$RSS_COMPONENTS" ] && [ -n "$VMSIZE_AND_NAME" ]; then
-            read -r P_RSS_ANON P_RSS_FILE P_RSS_SHMEM <<< "$RSS_COMPONENTS"
-            read -r P_VSZ P_COMM <<< "$VMSIZE_AND_NAME"
-
-            # Ensure components are numeric; default to 0 if not (e.g., awk failed partially)
-            P_RSS_ANON=${P_RSS_ANON:-0}
-            P_RSS_FILE=${P_RSS_FILE:-0}
-            P_RSS_SHMEM=${P_RSS_SHMEM:-0}
-
-            P_RSS_SUM=$((P_RSS_ANON + P_RSS_FILE + P_RSS_SHMEM))
-
-            # Calculate %MEM manually using the sum from smaps_rollup
+            # Calculate %MEM manually
+            # Get total system memory in KiB
             TOTAL_MEM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
             PERCENT_MEM="0.0" # Default
             if [ "$TOTAL_MEM_KB" -gt 0 ] && [ "$P_RSS_SUM" -gt 0 ]; then
+                # Use awk for floating point division
                 PERCENT_MEM=$(awk -v rss="$P_RSS_SUM" -v total="$TOTAL_MEM_KB" 'BEGIN {printf "%.1f", (rss/total)*100}')
             fi
 
             TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
-            # Log: Timestamp, PID, Summed_RSS_from_smaps_rollup, VmSize, %MEM, Command
-            LOG_ENTRY="$TIMESTAMP,$TARGET_PID,$P_RSS_SUM,$P_VSZ,$PERCENT_MEM,$P_COMM"
+            # Log: Timestamp, PID, Summed_RSS, VmSize, %MEM, Command
+            LOG_ENTRY="$TIMESTAMP, $P_PID $P_RSS_SUM $P_VSZ $PERCENT_MEM $P_COMM"
             stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
         else
-            echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc files. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
+            echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
         fi
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Process PID $TARGET_PID no longer running or /proc files missing. Exiting." | tee -a "$LOG_FILE"
+        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Process PID $TARGET_PID no longer running. Exiting." | tee -a "$LOG_FILE"
         break # Exit the loop if the process is gone
     fi
 
