@@ -18,24 +18,31 @@ def parse_log(log_file: str, out: str):
             )
 
             while curr_line != "":  # read until EOF
-                if curr_line[0] == "L":
-                    params = curr_line.split("(")[1][:-2]
-                    output.write(f"Params: {params}\n")
+                if curr_line[0]=="L":
+                    params=curr_line.split(': (')[1][:-2]
+                    output.write(f"\nparams: {params}\n")
                     curr_line = f.readline()
-                    mem = np.array([[-1.0, -1.0, -1.0]])  # RSS, VSZ, %MEM
+                else:
                     while curr_line[0] != "L":
-                        if curr_line[0] != "S":
-                            mem = np.append(
-                                mem, [curr_line.split(" ")[3:6]], axis=0
-                            ).astype(float)
-                        else:
-                            step_name = curr_line.split(": ")[1].split(" C")[0]
-                            max_mem = np.max(mem, axis=0)
-                            output.write(f"{step_name}: {int(max_mem[0])} KB ({max_mem[2]}%)\n")
-                            mem = np.array([[-1.0, -1.0, -1.0]])
-                        curr_line = f.readline()
+                        next(f)
+                        next(f)
+                        curr_line=f.readline()
+                        mem = np.array([[-1.0,-1.0]])
+                        while curr_line[-2] != ".":
+                            mem=np.append(mem, [[curr_line.split(' ')[3],curr_line.split(' ')[5]]],axis=0).astype(float)
+                            curr_line=f.readline()
+                        curr_line=f.readline()
+                        step = curr_line.split(": ")[1].split(" C")[0]
+                        max_mem=np.max(mem, axis=0)
+                        output.write(f"{step}: {np.round((max_mem[0]/1024/1024),2)} GB ({max_mem[1]}%)\n")
+                        curr_line=f.readline()
+                    curr_line=f.readline()
 
-                curr_line = f.readline()
+                    
+                    
+                    
+                
+                
 
 
 if __name__ == "__main__":
