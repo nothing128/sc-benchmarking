@@ -8,7 +8,7 @@ import psutil
 import subprocess
 import time
 
-work_dir = '/results'
+work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
 data_dir = 'single-cell/SEAAD/subsampled'
 log_file = 'memory_monitor.log'
 
