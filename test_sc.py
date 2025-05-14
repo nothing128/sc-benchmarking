@@ -8,7 +8,7 @@ import psutil
 import subprocess
 import time
 
-work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
+work_dir = '/results'
 data_dir = 'single-cell/SEAAD/subsampled'
 log_file = 'memory_monitor.log'
 
@@ -28,6 +28,7 @@ num_threads_options = [-1]
 subset_options = [True, False]
 drop_X_options = [False]
 size_options = ['20K', '400K', '1M']
+size_options = ['20K']
 all_timers = []
 delay = 0.1
 params = itertools.product(

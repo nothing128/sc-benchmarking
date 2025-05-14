@@ -34,7 +34,7 @@ def parse_log(log_file: str, out: str):
                         curr_line=f.readline()
                         step = curr_line.split(": ")[1].split(" C")[0]
                         max_mem=np.max(mem, axis=0)
-                        output.write(f"{step}: {np.round((max_mem[0]/1024/1024),2)} GB ({max_mem[1]}%)\n")
+                        output.write(f"{step}: {np.round((max_mem[0]/1024/1024),2)} GB ({max_mem[1]}%) \n")
                         curr_line=f.readline()
                     curr_line=f.readline()
 
