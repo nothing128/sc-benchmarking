@@ -26,18 +26,17 @@ system_info()
 
 num_threads_options = [-1]
 subset_options = [True, False]
-drop_X_options = [False]
 size_options = ['20K', '400K', '1M']
 all_timers = []
 delay = 0.1
 params = itertools.product(
-    size_options, num_threads_options, subset_options, drop_X_options
+    size_options, num_threads_options, subset_options
 )
 pid = os.getpid()
 with open(log_file, "a") as file:
 
-    for size, num_threads, subset, drop_X in params:
-        file.write(f"LOOP_INFO: Iteration Start Params: (size: {size},num_thread: {num_threads},subset: {subset},drop_X: {drop_X})\n")
+    for size, num_threads, subset in params:
+        file.write(f"LOOP_INFO: Iteration Start Params: (size: {size}, num_threads: {num_threads}, subset: {subset}\n")
         file.flush()
         timers = TimerCollection(silent=True)
 
@@ -47,7 +46,8 @@ with open(log_file, "a") as file:
         with timers('Load data'):
             data = SingleCell(
                 f'{data_dir}/SEAAD_raw_{size}.h5ad',
-                num_threads=num_threads)
+                num_threads=1)
+            data = data.set_num_threads(num_threads)
         subprocess.run(["kill", str(curr_process.pid)])
         curr_process.wait()
         curr_process = None
@@ -133,9 +133,6 @@ with open(log_file, "a") as file:
         # Not timed
         if not subset:
             data = data.filter_obs(pl.col('passed_QC'))
-        if drop_X:
-            X_copy = data.X.copy()
-            data = data.drop_X()
 
         with timers('Neighbor graph'):
             curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
@@ -201,8 +198,6 @@ with open(log_file, "a") as file:
         file.flush()
 
         # Not timed
-        if drop_X:
-            data.X = X_copy
         curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
         time.sleep(delay)
         with timers('Find markers'):
@@ -224,7 +219,7 @@ with open(log_file, "a") as file:
         # os.remove(f'{data_dir}/test_write.h5ad')
 
         print('--- Params ---')
-        print(f'{size=}, {num_threads=}, {subset=}, {drop_X=}')
+        print(f'{size=}, {num_threads=}, {subset=}')
         timers.print_summary(sort=False)
 
         df = timers\
@@ -233,12 +228,11 @@ with open(log_file, "a") as file:
                 pl.lit('basic').alias('vignette'),
                 pl.lit(size).alias('size'),
                 pl.lit(num_threads).alias('num_threads'),
-                pl.lit(subset).alias('subset'),
-                pl.lit(drop_X).alias('drop_X'))
+                pl.lit(subset).alias('subset'))
 
         all_timers.append(df)
         del data, timers, df; gc.collect()
-        file.write(f"LOOP_INFO: Iteration End Params: {size,num_threads,subset,drop_X} \n")
+        file.write(f"LOOP_INFO: Iteration End Params: {size,num_threads,subset} \n")
         file.flush()
 
 timers_df = pl.concat(all_timers)
