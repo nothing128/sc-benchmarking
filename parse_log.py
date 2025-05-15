@@ -19,7 +19,7 @@ def parse_log(log_file: str, out: str):
 
             while curr_line != "":  # read until EOF
                 if curr_line[0]=="L":
-                    params=curr_line.split(': (')[1][:-2]
+                    params=curr_line.split(': (')[1][:-1]
                     output.write(f"\nparams: {params}\n")
                     curr_line = f.readline()
                 else:
