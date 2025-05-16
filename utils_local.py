@@ -116,12 +116,13 @@ class TimerMemoryCollection:
                 subprocess.run(["kill", str(curr_process.pid)])
                 
                 stdout_output = curr_process.communicate()[0]
-                mat = np.loadtxt(io.StringIO(stdout_output), delimiter=',').astype(float)
+                
+                mat = np.append(np.array([[-1.0,-1.0]]),np.loadtxt(io.StringIO(stdout_output), delimiter=',').astype(float))
                 max_mat=np.max(mat,axis=0)
                 if stdout_output:
                     print(message)
                     print("-----------")
-                    print(mat) # .strip() is often useful to remove trailing newlines
+                    print(max_mat) # .strip() is often useful to remove trailing newlines
                     print("-----------")
                 else:
                     print("No output on stdout.")
