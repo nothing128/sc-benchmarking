@@ -45,7 +45,10 @@ for size in size_options:
     with timers('Doublet detection'):
         sc.pp.scrublet(data, batch_key='sample')
 
-    data = data[data.obs['passed_QC_tmp']]
+    # data = data[data.obs['passed_QC_tmp']]
+    data = data\
+            .rename_obs({'tmp_passed_QC': 'passed_QC'})\
+            .with_uns(QCed=True)
     print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 
     with timers('Normalization'):
