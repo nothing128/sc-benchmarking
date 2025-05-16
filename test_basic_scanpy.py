@@ -5,7 +5,7 @@ import polars as pl
 import matplotlib.pyplot as plt
 
 work_dir = 'projects/sc-benchmarking'
-data_dir = 'scratch/single-cell/SEAAD'
+data_dir = 'single-cell/SEAAD/subsampled'
 sys.path.append(work_dir)
 
 from utils_local import TimerMemoryCollection, system_info
