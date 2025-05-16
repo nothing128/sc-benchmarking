@@ -122,12 +122,9 @@ class TimerMemoryCollection:
                     mat=mat[None,None]
                 max_mat=np.squeeze(np.max(mat,axis=0))
                 if stdout_output:
-                    print(message)
-                    print("-----------")
-                    print(max_mat) # .strip() is often useful to remove trailing newlines
-                    print("-----------")
+                    print(f"{message} complete in {duration} seconds using {max_mat[0]/1024/1024} GiB ({max_mat[1]})")
                 else:
-                    print("No output on stdout.")
+                    print(f"{message} complete in {duration} seconds but no memory poll occured")
                 curr_process.wait()
                 curr_process = None
         return timer()
