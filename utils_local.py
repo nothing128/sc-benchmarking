@@ -119,6 +119,7 @@ class TimerMemoryCollection:
 
                 print("--- STDOUT ---")
                 if stdout_output:
+                    print(message)
                     print(stdout_output.strip()) # .strip() is often useful to remove trailing newlines
                 else:
                     print("No output on stdout.")
