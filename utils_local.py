@@ -115,7 +115,7 @@ class TimerMemoryCollection:
                     print(f'{message} {status} {time_str}\n')
                 subprocess.run(["kill", str(curr_process.pid)])
                 
-                stdout_output = curr_process.communicate()
+                stdout_output = curr_process.communicate()[0]
 
                 print("--- STDOUT ---")
                 if stdout_output:
