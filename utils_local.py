@@ -198,16 +198,18 @@ class TimerMemoryCollection:
         if not self.timings:
             return pl.DataFrame({
                 'operation': [], 'duration': [], 
-                'duration_unit': [], 'aborted': [], 'percentage': []
+                'duration_unit': [], 'aborted': [], 'percentage': [],
+                'memory' : [], '%mem' : []
             })
-            
+
         ops, durs, aborts, pcts = [], [], [], []
+        memory, percent_mem = [], []
         total = sum(info['duration'] for info in self.timings.values())
-        
+
         items = sorted(self.timings.items(), 
                       key=lambda x: x[1]['duration'], 
                       reverse=True) if sort else list(self.timings.items())
-        
+
         duration_unit = 's'
         if unit is not None:
             duration_unit = unit
@@ -234,17 +236,22 @@ class TimerMemoryCollection:
                 durs.append(info['duration'] * conversion)
                 aborts.append(info['aborted'])
                 pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
+                memory.append((info['memory']))
+                percent_mem.append((info['%mem']))
         else:
             for msg, info in items:
                 ops.append(msg)
                 durs.append(info['duration'])
                 aborts.append(info['aborted'])
                 pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
+                memory.append((info['memory']))
+                percent_mem.append((info['%mem']))
             
         return pl.DataFrame({
             'operation': ops, 'duration': durs,
             'duration_unit': [duration_unit] * len(ops),
-            'aborted': aborts, 'percentage': pcts
+            'aborted': aborts, 'percentage': pcts,
+            'memory': memory, '%mem': percent_mem
         })
     
 def system_info():
