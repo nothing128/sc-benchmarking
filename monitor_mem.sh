@@ -138,6 +138,7 @@ while true; do
             LOG_ENTRY="$TIMESTAMP, $P_PID $P_RSS_SUM $P_VSZ $PERCENT_MEM $P_COMM"
             echo "$LOG_ENTRY"
         else
+            :
             # echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
         fi
     else
