@@ -47,7 +47,7 @@ for size, num_threads, subset in params:
             num_threads=1)
         data = data.set_num_threads(num_threads)
     print(f'X num_threads: {data.X._num_threads}')
-
+    assert False
     # Note: QC filters are matched across libraries for timing, then
     # standardized by filtering to single_cell.py qc cells
     with timers('Quality control'):
