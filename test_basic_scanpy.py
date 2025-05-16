@@ -15,7 +15,7 @@ size_options = ['20K', '400K', '1M']
 size_options = ['20K']
 for size in size_options:
 
-    timers = TimerCollection(silent=False)
+    timers = TimerMemoryCollection(silent=False)
 
     # with timers('Load data (10X mtx)'):
     #     data = sc.read_10x_mtx(f'{data_dir}/SEAAD_raw_{size}')
