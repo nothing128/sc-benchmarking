@@ -146,8 +146,6 @@ for size, num_threads, subset in params:
 
     all_timers.append(df)
     del data, timers, df; gc.collect()
-    file.write(f"LOOP_INFO: Iteration End Params: {size,num_threads,subset} \n")
-    file.flush()
 
 timers_df = pl.concat(all_timers)
 timers_df.write_csv(f'{work_dir}/output/test_basic_sc_all.csv')
