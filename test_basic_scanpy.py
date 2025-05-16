@@ -8,7 +8,7 @@ work_dir = 'projects/sc-benchmarking'
 data_dir = 'scratch/single-cell/SEAAD'
 sys.path.append(work_dir)
 
-from utils_local import TimerCollection, system_info
+from utils_local import TimerMemoryCollection, system_info
 
 system_info()
 size_options = ['20K', '400K', '1M']
