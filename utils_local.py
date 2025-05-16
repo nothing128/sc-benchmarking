@@ -204,6 +204,7 @@ class TimerMemoryCollection:
 
         ops, durs, aborts, pcts = [], [], [], []
         memory, percent_mem = [], []
+        memory_unit=[]
         total = sum(info['duration'] for info in self.timings.values())
 
         items = sorted(self.timings.items(), 
@@ -237,6 +238,7 @@ class TimerMemoryCollection:
                 aborts.append(info['aborted'])
                 pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
                 memory.append((info['memory']))
+                memory.append("GiB")
                 percent_mem.append((info['%mem']))
         else:
             for msg, info in items:
@@ -245,6 +247,7 @@ class TimerMemoryCollection:
                 aborts.append(info['aborted'])
                 pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
                 memory.append((info['memory']))
+                memory.append("GiB")
                 percent_mem.append((info['%mem']))
             
         return pl.DataFrame({
