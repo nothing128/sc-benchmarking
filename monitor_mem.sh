@@ -118,7 +118,7 @@ while true; do
 
         if [ -n "$PROC_MEM_INFO" ]; then
             # Read the parsed values into separate variables
-            read -r P_PID P_RSS_SUM P_VSZ P_COMM <<< "$PROC_MEM_INFO"
+            read -r P_RSS_SUM <<< "$PROC_MEM_INFO"
 
             # Calculate %MEM manually
             # Get total system memory in KiB
