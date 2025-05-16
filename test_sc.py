@@ -29,7 +29,7 @@ subset_options = [True, False]
 size_options = ['20K', '400K', '1M']
 size_options = ['20K']
 all_timers = []
-delay = 0.1
+delay = 0.15
 params = itertools.product(
     size_options, num_threads_options, subset_options
 )
