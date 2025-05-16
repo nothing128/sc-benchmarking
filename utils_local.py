@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from timeit import default_timer
 import subprocess
 import time
+import io
 
 delay=0.1
 def write_to_mtx(adata, output_dir):
@@ -115,7 +116,7 @@ class TimerMemoryCollection:
                 subprocess.run(["kill", str(curr_process.pid)])
                 
                 stdout_output = curr_process.communicate()[0]
-                mat = np.loadtxt(curr_process.stdout, delimiter=',')
+                mat = np.loadtxt(io.StringIO(stdout_output), delimiter=',')
                 if stdout_output:
                     print(message)
                     print(mat) # .strip() is often useful to remove trailing newlines
