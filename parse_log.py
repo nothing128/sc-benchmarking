@@ -29,6 +29,7 @@ def parse_log(log_file: str, out: str):
                         curr_line=f.readline()
                         mem = np.array([[-1.0,-1.0]])
                         while curr_line[-2] != ".":
+                            print(curr_line)
                             mem=np.append(mem, [[curr_line.split(' ')[3],curr_line.split(' ')[5]]],axis=0).astype(float)
                             curr_line=f.readline()
                         curr_line=f.readline()

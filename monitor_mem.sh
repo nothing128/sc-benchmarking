@@ -20,7 +20,7 @@ usage() {
 }
 
 cleanup() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Memory monitor script (PID $$) stopping." | tee -a "$LOG_FILE"
+    # echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Memory monitor script (PID $$) stopping." | tee -a "$LOG_FILE"
     rm -f "$MONITOR_PID_FILE"
     exit 0
 }
@@ -80,14 +80,14 @@ fi
 echo $$ > "$MONITOR_PID_FILE"
 trap cleanup SIGINT SIGTERM # Call cleanup on script exit or interruption
 
-echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Starting memory monitor for PID $TARGET_PID (Interval: ${INTERVAL}s, Log: ${LOG_FILE})" | tee -a "$LOG_FILE"
-echo "Starting log at $(date '+%Y-%m-%d %H:%M:%S:%N')" >> "$LOG_FILE"
-echo "Timestamp, PID, RSS (KB), VSZ (KB), %MEM, Command" >> "$LOG_FILE"
+# echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Starting memory monitor for PID $TARGET_PID (Interval: ${INTERVAL}s, Log: ${LOG_FILE})" | tee -a "$LOG_FILE"
+# echo "Starting log at $(date '+%Y-%m-%d %H:%M:%S:%N')" >> "$LOG_FILE"
+# echo "Timestamp, PID, RSS (KB), VSZ (KB), %MEM, Command" >> "$LOG_FILE"
 
 while true; do
     # Check if the target process still exists
     if ! ps -p "$TARGET_PID" > /dev/null; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
+        # echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Target process PID $TARGET_PID no longer exists. Exiting monitor." | tee -a "$LOG_FILE"
         cleanup
     fi
 
@@ -136,12 +136,12 @@ while true; do
             TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
             # Log: Timestamp, PID, Summed_RSS, VmSize, %MEM, Command
             LOG_ENTRY="$TIMESTAMP, $P_PID $P_RSS_SUM $P_VSZ $PERCENT_MEM $P_COMM"
-            stdbuf -oL echo "$LOG_ENTRY" >> "$LOG_FILE"
+            echo "$LOG_ENTRY"
         else
-            echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
+            # echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - WARN: Could not parse memory info for PID $TARGET_PID from /proc. It might have just exited or permissions changed." | tee -a "$LOG_FILE"
         fi
     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Process PID $TARGET_PID no longer running. Exiting." | tee -a "$LOG_FILE"
+        # echo "$(date '+%Y-%m-%d %H:%M:%S:%N') - INFO: Process PID $TARGET_PID no longer running. Exiting." | tee -a "$LOG_FILE"
         break # Exit the loop if the process is gone
     fi
 

@@ -7,6 +7,7 @@ from single_cell import SingleCell
 import psutil
 import subprocess
 import time
+from utils_local import TimerMemoryCollection, system_info
 
 work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
 data_dir = 'single-cell/SEAAD/subsampled'
@@ -20,7 +21,6 @@ sys.path.append(work_dir)
 if os.path.exists(log_file):
     os.remove(log_file)
 
-from utils_local import TimerCollection, system_info
 
 system_info()
 
@@ -32,34 +32,27 @@ delay = 0.1
 params = itertools.product(
     size_options, num_threads_options, subset_options
 )
-pid = os.getpid()
+
 with open(log_file, "a") as file:
 
     for size, num_threads, subset in params:
         file.write(f"LOOP_INFO: Iteration Start Params: (size: {size}, num_threads: {num_threads}, subset: {subset}\n")
         file.flush()
-        timers = TimerCollection(silent=True)
+        timers = TimerMemoryCollection(silent=True)
 
         # Note: Loading is much slower from $scratch disk
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
+        
         with timers('Load data'):
             data = SingleCell(
                 f'{data_dir}/SEAAD_raw_{size}.h5ad',
                 num_threads=1)
             data = data.set_num_threads(num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
-
         file.write("STEP_INFO: Load Data Complete\n")
         file.flush()
         print(f'X num_threads: {data.X._num_threads}')
 
         # Note: QC filters are matched across libraries for timing, then
         # standardized by filtering to single_cell.py qc cells
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Quality control'):
             data.qc(
                 subset=subset,
@@ -70,9 +63,6 @@ with open(log_file, "a") as file:
                 allow_float=True,
                 verbose=False,
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Quality control Complete\n")
         file.flush()
 
@@ -85,48 +75,28 @@ with open(log_file, "a") as file:
             data = data\
                 .rename_obs({'tmp_passed_QC': 'passed_QC'})\
                 .with_uns(QCed=True)
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Doublet detection'):
             data = data.find_doublets(
                 batch_column='sample',
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Doublet detection Complete\n")
         file.flush()
 
         print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Feature selection'):
             data = data.hvg(
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Feature selection Complete\n")
         file.flush()
 
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Normalization'):
             data = data.normalize(
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Normalization Complete\n")
         file.flush()
 
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('PCA'):
             data = data.PCA(num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: PCA Complete\n")
         file.flush()
 
@@ -134,37 +104,21 @@ with open(log_file, "a") as file:
         if not subset:
             data = data.filter_obs(pl.col('passed_QC'))
 
-        with timers('Neighbor graph'):
-            curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-            time.sleep(delay)
-            with timers('KNN'):
-                data = data.neighbors(num_threads=num_threads)
-            subprocess.run(["kill", str(curr_process.pid)])
-            curr_process.wait()
-            curr_process = None
-            file.write("STEP_INFO: KNN Complete\n")
-            file.flush()
+        with timers('KNN'):
+            data = data.neighbors(num_threads=num_threads)
+        file.write("STEP_INFO: KNN Complete\n")
+        file.flush()
 
-            curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-            time.sleep(delay)
-            with timers('SNN'):
-                data = data.shared_neighbors(num_threads=num_threads)
-            subprocess.run(["kill", str(curr_process.pid)])
-            curr_process.wait()
-            curr_process = None
-            file.write("STEP_INFO: SNN Complete\n")
-            file.flush()
+        with timers('SNN'):
+            data = data.shared_neighbors(num_threads=num_threads)
+        file.write("STEP_INFO: SNN Complete\n")
+        file.flush()
 
         # TODO: The number of clusters needs to match across libraries
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Clustering (3 resolutions)'):
             data = data.cluster(
                 resolution=[1, 0.5, 2],
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Clustering Complete\n")
         file.flush()
 
@@ -174,39 +128,24 @@ with open(log_file, "a") as file:
 
         # TODO: Swap neighbor graphs with scanpy to assess
         # embedding differences
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Embedding'):
             data = data.embed(
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Embedding Complete\n")
         file.flush()
 
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Plot embeddings'):
             data.plot_embedding(
                 'cluster_0',
                 f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Plot embeddings Complete\n")
         file.flush()
 
         # Not timed
-        curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)], shell=False)
-        time.sleep(delay)
         with timers('Find markers'):
             markers = data.find_markers(
                 'cluster_0',
                 num_threads=num_threads)
-        subprocess.run(["kill", str(curr_process.pid)])
-        curr_process.wait()
-        curr_process = None
         file.write("STEP_INFO: Find markers Complete\n")
         file.flush()
 

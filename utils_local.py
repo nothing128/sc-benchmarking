@@ -10,7 +10,10 @@ from scipy import sparse
 from scipy.io import mmwrite
 from contextlib import contextmanager
 from timeit import default_timer
+import subprocess
+import time
 
+delay=0.1
 def write_to_mtx(adata, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     with gzip.open(f'{output_dir}/matrix.mtx.gz', 'wb', compresslevel=4) as f:
@@ -74,17 +77,27 @@ def write_to_h5(adata, file):
                       dtype=f'|S{str_max(adata.var.index)}'))
     w.close()
 
-class TimerCollection:
+
+class TimerMemoryCollection:
     def __init__(self, silent=True):
         self.timings = {}
         self.silent = silent
         
     def __call__(self, message):
         start = default_timer()
+        pid = os.getpid()
         @contextmanager
         def timer():
+            
             if not self.silent:
                 print(f'{message}...')
+            curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)],
+                                        shell=False,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        text=True)
+        
+            time.sleep(delay)
             try:
                 yield
                 aborted = False
@@ -101,6 +114,10 @@ class TimerCollection:
                     status = 'aborted after' if aborted else 'took'
                     time_str = self._format_time(duration)
                     print(f'{message} {status} {time_str}\n')
+                subprocess.run(["kill", str(curr_process.pid)])
+                curr_process.wait()
+                print(curr_process.stdout)  # parse mem here :D
+                curr_process = None
         return timer()
     
     def print_summary(self, sort=True, unit=None):
