@@ -4,7 +4,6 @@ import socket
 import polars as pl
 import gzip
 import h5py
-import polars as pl
 import numpy as np
 from scipy import sparse
 from scipy.io import mmwrite
@@ -116,11 +115,10 @@ class TimerMemoryCollection:
                 subprocess.run(["kill", str(curr_process.pid)])
                 
                 stdout_output = curr_process.communicate()[0]
-
-                print("--- STDOUT ---")
+                
                 if stdout_output:
                     print(message)
-                    print(stdout_output.strip()) # .strip() is often useful to remove trailing newlines
+                    print(stdout_output) # .strip() is often useful to remove trailing newlines
                 else:
                     print("No output on stdout.")
                 curr_process.wait()
