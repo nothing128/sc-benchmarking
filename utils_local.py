@@ -117,7 +117,7 @@ class TimerMemoryCollection:
                 
                 stdout_output = curr_process.communicate()[0]
                 
-                mat = np.append(np.array([[-1.0,-1.0]]),np.loadtxt(io.StringIO(stdout_output), delimiter=',').astype(float))
+                mat = np.loadtxt(io.StringIO(stdout_output), delimiter=',').astype(float)[None,None]
                 max_mat=np.max(mat,axis=0)
                 if stdout_output:
                     print(message)
