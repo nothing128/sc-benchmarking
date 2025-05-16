@@ -5,7 +5,7 @@ import polars as pl
 import matplotlib.pyplot as plt
 
 work_dir = 'projects/sc-benchmarking'
-data_dir = 'single-cell/SEAAD/subsampled'
+data_dir = 'scratch/single-cell/SEAAD'
 sys.path.append(work_dir)
 
 from utils_local import TimerMemoryCollection, system_info
@@ -37,7 +37,7 @@ for size in size_options:
         data.var['mt'] = data.var_names.str.startswith('MT-')
         sc.pp.calculate_qc_metrics(
             data, qc_vars=['mt'], inplace=True, log1p=True)
-        sc.pp.filter_cells(data, min_genes=100, copy=True)
+        sc.pp.filter_cells(data, min_genes=100, copy=False)
         sc.pp.filter_genes(data, min_cells=3, copy=True)
 
     print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
@@ -45,7 +45,7 @@ for size in size_options:
     with timers('Doublet detection'):
         sc.pp.scrublet(data, batch_key='sample')
 
-    data = data[data.obs['passed_QC']]
+    data = data[data.obs['passed_QC_tmp']]
     print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
 
     with timers('Normalization'):
