@@ -116,7 +116,7 @@ class TimerMemoryCollection:
                 subprocess.run(["kill", str(curr_process.pid)])
                 
                 stdout_output = curr_process.communicate()[0]
-                mat = np.loadtxt(io.StringIO(stdout_output), delimiter=',')
+                mat = np.loadtxt(io.StringIO(stdout_output), delimiter=',').astype(int)
                 if stdout_output:
                     print(message)
                     print(mat) # .strip() is often useful to remove trailing newlines
