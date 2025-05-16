@@ -11,8 +11,9 @@ sys.path.append(work_dir)
 from utils_local import TimerCollection, system_info
 
 system_info()
-
-for size in ['20K', '400K', '1M']:
+size_options = ['20K', '400K', '1M']
+size_options = ['20K']
+for size in size_options:
 
     timers = TimerCollection(silent=False)
 
