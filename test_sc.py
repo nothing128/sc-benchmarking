@@ -60,7 +60,6 @@ for size, num_threads, subset in params:
             allow_float=True,
             verbose=False,
             num_threads=num_threads)
-    assert False
     # Not timed
     if subset:
         data = data\
