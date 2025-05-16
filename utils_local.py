@@ -94,7 +94,6 @@ class TimerMemoryCollection:
             curr_process = subprocess.Popen(["./monitor_mem.sh", "-p", str(pid)],
                                         shell=False,
                                         stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
                                         text=True)
         
             time.sleep(delay)
@@ -116,19 +115,13 @@ class TimerMemoryCollection:
                     print(f'{message} {status} {time_str}\n')
                 subprocess.run(["kill", str(curr_process.pid)])
                 
-                stdout_output, stderr_output = curr_process.communicate()
+                stdout_output = curr_process.communicate()
 
                 print("--- STDOUT ---")
                 if stdout_output:
                     print(stdout_output.strip()) # .strip() is often useful to remove trailing newlines
                 else:
                     print("No output on stdout.")
-                    
-                print("\n--- STDERR ---")
-                if stderr_output:
-                    print(stderr_output.strip())
-                else:
-                    print("No output on stderr.")
                 curr_process.wait()
                 curr_process = None
         return timer()
