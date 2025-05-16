@@ -120,7 +120,7 @@ class TimerMemoryCollection:
                 mat = np.loadtxt(io.StringIO(stdout_output), delimiter=',').astype(float)
                 if mat.ndim==1:
                     mat=mat[None,None]
-                max_mat=np.max(mat,axis=0)
+                max_mat=np.squeeze(np.max(mat,axis=0))
                 if stdout_output:
                     print(message)
                     print("-----------")
