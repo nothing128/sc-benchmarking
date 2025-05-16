@@ -105,18 +105,14 @@ while true; do
         PROC_MEM_INFO=$(awk '
             BEGIN {
                 rss_anon=0; rss_file=0; rss_shmem=0; # Initialize to 0 in case some are not present
-                vm_size=0; name="N/A"; pid_val="N/A";
             }
-            /^Pid:/ {pid_val=$2}
-            /^Name:/ {name=$2}        # This is the command name
-            /^VmSize:/ {vm_size=$2}   # Virtual memory size (like VSZ)
             /^RssAnon:/ {rss_anon=$2}
             /^RssFile:/ {rss_file=$2}
             /^RssShmem:/ {rss_shmem=$2}
             END {
                 rss_sum = rss_anon + rss_file + rss_shmem;
-                # Output: PID, Calculated_RSS_Sum, VmSize, CommandName
-                print pid_val, rss_sum, vm_size, name;
+                # Output: Calculated_RSS_Sum
+                print rss_sum;
             }
         ' "/proc/$TARGET_PID/status" 2>/dev/null) # Redirect stderr for race conditions
 
@@ -133,9 +129,8 @@ while true; do
                 PERCENT_MEM=$(awk -v rss="$P_RSS_SUM" -v total="$TOTAL_MEM_KB" 'BEGIN {printf "%.1f", (rss/total)*100}')
             fi
 
-            TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S:%N')
             # Log: Timestamp, PID, Summed_RSS, VmSize, %MEM, Command
-            LOG_ENTRY="$TIMESTAMP, $P_PID $P_RSS_SUM $P_VSZ $PERCENT_MEM $P_COMM"
+            LOG_ENTRY="$P_RSS_SUM, $PERCENT_MEM"
             echo "$LOG_ENTRY"
         else
             :
