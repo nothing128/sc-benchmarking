@@ -105,10 +105,7 @@ class TimerMemoryCollection:
                 raise e
             finally:
                 duration = default_timer() - start
-                self.timings[message] = {
-                    'duration': duration,
-                    'aborted': aborted
-                }
+                
                 if not self.silent:
                     status = 'aborted after' if aborted else 'took'
                     time_str = self._format_time(duration)
@@ -121,12 +118,15 @@ class TimerMemoryCollection:
                 if mat.ndim==1:
                     mat=mat[None,None]
                 max_mat=np.squeeze(np.max(mat,axis=0))
-                if stdout_output:
-                    print(f"{message} complete in {np.round(duration,2)} seconds using {np.round(max_mat[0]/1024/1024,2)} GiB ({np.round(max_mat[1],1)}%)")
-                else:
-                    print(f"{message} complete in {np.round(duration,2)} seconds but no memory poll occured")
                 curr_process.wait()
                 curr_process = None
+                self.timings[message] = {
+                    'duration': duration,
+                    'memory': np.round(max_mat[0]/1024/1024,2),
+                    '%mem': np.round(max_mat[1],1),
+                    'aborted': aborted
+                    
+                }
         return timer()
     
     def print_summary(self, sort=True, unit=None):
@@ -142,10 +142,11 @@ class TimerMemoryCollection:
         
         for message, info in timings_items:
             duration = info['duration']
+            memory = info['memory']
             percentage = (duration / total_time) * 100 if total_time > 0 else 0
             status = 'aborted after' if info['aborted'] else 'took'
             time_str = self._format_time(duration, unit)
-            print(f'{message} {status} {time_str} ({percentage:.1f}%)')
+            print(f'{message} {status} {time_str} ({percentage:.1f}%) using {memory} GiB ({info["%mem"]}%)')
         print(f'\nTotal time: {self._format_time(total_time, unit)}')
     
     def _format_time(self, duration, unit=None):
