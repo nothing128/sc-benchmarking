@@ -238,7 +238,7 @@ class TimerMemoryCollection:
                 aborts.append(info['aborted'])
                 pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
                 memory.append((info['memory']))
-                memory.append("GiB")
+                memory_unit.append("GiB")
                 percent_mem.append((info['%mem']))
         else:
             for msg, info in items:
@@ -247,14 +247,14 @@ class TimerMemoryCollection:
                 aborts.append(info['aborted'])
                 pcts.append((info['duration'] / total) * 100 if total > 0 else 0)
                 memory.append((info['memory']))
-                memory.append("GiB")
+                memory_unit.append("GiB")
                 percent_mem.append((info['%mem']))
             
         return pl.DataFrame({
             'operation': ops, 'duration': durs,
             'duration_unit': [duration_unit] * len(ops),
             'aborted': aborts, 'percentage': pcts,
-            'memory': memory, '%mem': percent_mem
+            'memory': memory, 'memory_unit' : memory_unit,'%mem': percent_mem
         })
     
 def system_info():
