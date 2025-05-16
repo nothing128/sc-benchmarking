@@ -120,7 +120,9 @@ class TimerMemoryCollection:
                 max_mat=np.max(mat,axis=0)
                 if stdout_output:
                     print(message)
-                    print(max_mat) # .strip() is often useful to remove trailing newlines
+                    print("-----------")
+                    print(mat) # .strip() is often useful to remove trailing newlines
+                    print("-----------")
                 else:
                     print("No output on stdout.")
                 curr_process.wait()
