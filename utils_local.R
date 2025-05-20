@@ -19,6 +19,7 @@ TimerCollection = function(silent = TRUE) {
     aborted = FALSE
     
     tryCatch({
+      # write code to start ubprocess here
       result = invisible(eval(substitute(expr), parent.frame()))
     }, error = function(e) {
       aborted = TRUE
