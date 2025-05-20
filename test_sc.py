@@ -26,8 +26,8 @@ if os.path.exists(log_file):
 system_info()
 
 num_threads_options = [-1]
-subset_options = [True, False]
-size_options = ['20K', '400K', '1M']
+subset_options = [True, False, True, False]
+size_options = ['1M']
 all_timers = []
 delay = 0.15
 params = itertools.product(
