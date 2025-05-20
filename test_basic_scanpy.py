@@ -12,7 +12,7 @@ from utils_local import TimerMemoryCollection, system_info
 
 system_info()
 size_options = ['20K', '400K', '1M']
-size_options = ['20K']
+size_options = ['20K', '400K']
 for size in size_options:
 
     timers = TimerMemoryCollection(silent=False)
