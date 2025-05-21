@@ -41,7 +41,7 @@ TimerCollection = function(silent = TRUE) {
         aborted = aborted
       )
       run("kill", args = c(as.character(process_pid)))
-      stdout_output <- process$read_all_output()
+      stdout_output <- curr_process$read_all_output()
       print(stdout_output)
       
       if (!silent) {
