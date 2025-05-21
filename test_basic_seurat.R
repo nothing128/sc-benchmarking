@@ -6,7 +6,7 @@ suppressPackageStartupMessages({
     library(hdf5r)
 })
 
-work_dir = ""
+work_dir = "projects/rrg-wainberg/lamming6/sc-benchmarking"
 data_dir = "single-cell/SEAAD/subsampled"
 source(file.path("utils_local.R"))
 
