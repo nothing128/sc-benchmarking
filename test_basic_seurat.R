@@ -41,9 +41,6 @@ for (size in c("20K")) {
   timers$with_timer("Load data (h5ad/rds)", {
     data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
   })
-  print(class(data))
-  print(head(data@meta.data))
-  print(colnames(data@meta.data))
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
 
