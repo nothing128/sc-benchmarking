@@ -2,12 +2,14 @@ suppressPackageStartupMessages({
   library(parallel)
   library(benchmarkme)
   library(pryr)
+  library(processX)
 })
 
 TimerCollection = function(silent = TRUE) {
   env = environment()
   env$timings = list()
-  
+  env$delay = 0.15
+  pid = Sys.getpid()
   with_timer = function(message, expr) {
     start = Sys.time()
     
@@ -17,9 +19,16 @@ TimerCollection = function(silent = TRUE) {
     
     result = NULL
     aborted = FALSE
-    
+    curr_process <- process$new(
+        command = "./monitor_mem.sh",
+        args = c("-p", as.character(pid)),
+        stdout = "|"
+      )
+    process_pid <- curr_process$get_pid()
+    Sys.sleep(env$delay)
     tryCatch({
       # write code to start subprocess here with processX
+      
       result = invisible(eval(substitute(expr), parent.frame()))
     }, error = function(e) {
       aborted = TRUE
@@ -30,6 +39,9 @@ TimerCollection = function(silent = TRUE) {
         duration = duration,
         aborted = aborted
       )
+      run("kill", args = c(as.character(process_pid)))
+      stdout_output <- process$read_all_output()
+      print(stdout_output)
       
       if (!silent) {
         time_str = format_time(duration)
