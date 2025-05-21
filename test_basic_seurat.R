@@ -1,4 +1,3 @@
-install.packages("hdf5r")
 suppressPackageStartupMessages({
     library(dplyr)
     library(Seurat)
@@ -16,19 +15,19 @@ system_info()
 for (size in c("20K")) {  
   timers = TimerCollection(silent = FALSE)
 
-  # timers$with_timer("Load data (10X mtx)", {
-  #   data <- Read10X(
-  #       data.dir = paste0(data_dir, "/SEAAD_raw_", size),
-  #       gene.column=1)
-  #   data <- CreateSeuratObject(counts = data)
-  # })
-  # rm(data); invisible(gc())
-
-  timers$with_timer("Load data (h5)", {
-    data = Read10X_h5(
-        filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
+  timers$with_timer("Load data (10X mtx)", {
+    data <- Read10X(
+        data.dir = paste0(data_dir, "/SEAAD_raw_", size),
+        gene.column=1)
     data <- CreateSeuratObject(counts = data)
   })
+  # rm(data); invisible(gc())
+
+  # timers$with_timer("Load data (h5)", {
+  #   data = Read10X_h5(
+  #       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
+  #   data <- CreateSeuratObject(counts = data)
+  # })
   # rm(data); invisible(gc())
 
   # timers$with_timer("Load data (h5Seurat)", {
