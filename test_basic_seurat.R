@@ -15,12 +15,12 @@ system_info()
 for (size in c("20K")) {  
   timers = TimerCollection(silent = FALSE)
 
-  timers$with_timer("Load data (10X mtx)", {
-    data <- Read10X(
-        data.dir = paste0(data_dir, "/SEAAD_raw_", size),
-        gene.column=1)
-    data <- CreateSeuratObject(counts = data)
-  })
+  # timers$with_timer("Load data (10X mtx)", {
+  #   data <- Read10X(
+  #       data.dir = paste0(data_dir, "/SEAAD_raw_", size),
+  #       gene.column=1)
+  #   data <- CreateSeuratObject(counts = data)
+  # })
   # rm(data); invisible(gc())
 
   # timers$with_timer("Load data (h5)", {
@@ -38,18 +38,16 @@ for (size in c("20K")) {
 
   # Note: Loading is much slower from $SCRATCH disk
 
-  # timers$with_timer("Load data (h5ad/rds)", {
-  #   data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
-  # })
-  print(class(data))
-  print(head(data@meta.data))
-  print(colnames(data@meta.data))
+  timers$with_timer("Load data (h5ad/rds)", {
+    data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+  })
+
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
 
   timers$with_timer("Quality control", {
     data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
-    data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
+    # data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
   })
 
   data <- subset(data, subset = passed_QC_tmp == TRUE)
