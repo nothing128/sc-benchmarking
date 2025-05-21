@@ -141,7 +141,7 @@ TimerCollection = function(silent = TRUE) {
       status = if (info$aborted) 'aborted after' else 'took'
       time_str = format_time(duration, unit)
       
-      cat(sprintf('%s %s %s (%.1f%%) using %.1f GiB (%.2f%%)\n', msg, status, time_str, percentage,max_mem,mem_percent))
+      cat(sprintf('%s %s %s (%.1f%%) using %.2f GiB (%.1f%%)\n', msg, status, time_str, percentage,max_mem,mem_percent))
     }
     
     cat(sprintf('\nTotal time: %s\n', format_time(total_time, unit)))
