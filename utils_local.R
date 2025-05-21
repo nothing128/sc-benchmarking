@@ -39,9 +39,17 @@ TimerCollection = function(silent = TRUE) {
       duration = as.numeric(difftime(Sys.time(), start, units = 'secs'))
       processx::run("kill", args = c(as.character(process_pid)))
       stdout_output <- curr_process$read_all_output()
-      print(stdout_output)
+      con <- textConnection(stdout_output)
+      df <- read.csv(con, header = FALSE, sep = ",", strip.white = TRUE, col.names = c("Integer", "Percentage"))
+      close(con)
+      peak_mem <- max(df$Integer, na.rm = TRUE)
+
+      # Find the largest percentage
+      percent <- max(df$Percentage, na.rm = TRUE)
       env$timings[[message]] = list(
         duration = duration,
+        max_mem= peak_mem,
+        mem_percent = percent,
         aborted = aborted
       )
       
@@ -128,10 +136,13 @@ TimerCollection = function(silent = TRUE) {
       info = env$timings[[msg]]
       duration = info$duration
       percentage = if (total_time > 0) (duration / total_time) * 100 else 0
+      max_mem = info$max_mem/1024/1024
+      mem_percent = info$mem_percent
+
       status = if (info$aborted) 'aborted after' else 'took'
       time_str = format_time(duration, unit)
       
-      cat(sprintf('%s %s %s (%.1f%%)\n', msg, status, time_str, percentage))
+      cat(sprintf('%s %s %s (%.1f%%) using %s GiB (%.1f%%)\n', msg, status, time_str, percentage,max_mem,mem_percent))
     }
     
     cat(sprintf('\nTotal time: %s\n', format_time(total_time, unit)))
