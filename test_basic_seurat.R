@@ -1,8 +1,10 @@
+install.packages("hdf5r")
 suppressPackageStartupMessages({
     library(dplyr)
     library(Seurat)
     library(ggplot2)
     library(patchwork)
+    library(hdf5r)
 })
 
 work_dir = ""
