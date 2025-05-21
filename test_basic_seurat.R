@@ -102,7 +102,7 @@ for (size in c("20K")) {
   })
 
   timers$with_timer("Save data", {
-    saveRDS(data, paste0(data_dir, "/subsampled/test_write.rds"))
+    saveRDS(data, paste0(work_dir, "/output/test_write.rds"))
   })
 
   timers$print_summary(sort = FALSE)
