@@ -1,10 +1,11 @@
+install.packages(benchmarkme)
 suppressPackageStartupMessages({
   library(parallel)
   library(benchmarkme)
   library(pryr)
   library(processX)
 })
-install.packages(benchmarkme)
+
 
 TimerCollection = function(silent = TRUE) {
   env = environment()
