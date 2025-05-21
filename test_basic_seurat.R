@@ -22,17 +22,17 @@ for (size in c("20K")) {
   # })
   # rm(data); invisible(gc())
 
-  # timers$with_timer("Load data (h5)", {
-  #   data = Read10X_h5(
-  #       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
-  #   data <- CreateSeuratObject(counts = data)
-  # })
+  timers$with_timer("Load data (h5)", {
+    data = Read10X_h5(
+        filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
+    data <- CreateSeuratObject(counts = data)
+  })
   # rm(data); invisible(gc())
 
-  timers$with_timer("Load data (h5Seurat)", {
-    data <- LoadH5Seurat(
-      data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
-  })
+  # timers$with_timer("Load data (h5Seurat)", {
+  #   data <- LoadH5Seurat(
+  #     data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
+  # })
   # rm(data); invisible(gc())
 
   # Note: Loading is much slower from $SCRATCH disk
