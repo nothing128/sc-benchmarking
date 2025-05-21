@@ -1,4 +1,4 @@
-install.packages(benchmarkme)
+install.packages("benchmarkme")
 suppressPackageStartupMessages({
   library(parallel)
   library(benchmarkme)
