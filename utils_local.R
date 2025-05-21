@@ -1,9 +1,9 @@
-install.packages("processX")
+install.packages("processx")
 suppressPackageStartupMessages({
   library(parallel)
   library(benchmarkme)
   library(pryr)
-  library(processX)
+  library(processx)
 })
 
 
