@@ -29,17 +29,17 @@ for (size in c("20K")) {
   # })
   # rm(data); invisible(gc())
 
-  # timers$with_timer("Load data (h5Seurat)", {
-  #   data <- LoadH5Seurat(
-  #     data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
-  # })
+  timers$with_timer("Load data (h5Seurat)", {
+    data <- LoadH5Seurat(
+      data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
+  })
   # rm(data); invisible(gc())
 
   # Note: Loading is much slower from $SCRATCH disk
 
-  timers$with_timer("Load data (h5ad/rds)", {
-    data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
-  })
+  # timers$with_timer("Load data (h5ad/rds)", {
+  #   data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+  # })
   print(class(data))
   print(head(data@meta.data))
   print(colnames(data@meta.data))
