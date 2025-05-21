@@ -7,7 +7,7 @@ suppressPackageStartupMessages({
 
 work_dir = ""
 data_dir = "single-cell/SEAAD/subsampled"
-source(file.path(work_dir, "utils_local.R"))
+source(file.path("utils_local.R"))
 
 system_info()
 
