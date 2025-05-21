@@ -35,15 +35,16 @@ TimerCollection = function(silent = TRUE) {
       aborted = TRUE
       stop(e)
     }, finally = {
+      print("-----------------------------------------")
       duration = as.numeric(difftime(Sys.time(), start, units = 'secs'))
+      processx::run("kill", args = c(as.character(process_pid)))
+      stdout_output <- curr_process$read_all_output()
+      print(stdout_output)
       env$timings[[message]] = list(
         duration = duration,
         aborted = aborted
       )
-      print("-----------------------------------------")
-      processx::run("kill", args = c(as.character(process_pid)))
-      stdout_output <- curr_process$read_all_output()
-      print(stdout_output)
+      
       
       if (!silent) {
         time_str = format_time(duration)

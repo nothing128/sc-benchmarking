@@ -1,3 +1,5 @@
+install.packages('devtools')
+devtools::install_github('immunogenomics/presto')
 suppressPackageStartupMessages({
     library(dplyr)
     library(Seurat)
