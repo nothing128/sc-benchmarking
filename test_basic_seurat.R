@@ -12,7 +12,7 @@ source(file.path("utils_local.R"))
 
 system_info()
 
-for (size in c("20K")) {  
+for (size in c("400K")) {  
   timers = TimerCollection(silent = FALSE)
 
   # timers$with_timer("Load data (10X mtx)", {
@@ -41,6 +41,24 @@ for (size in c("20K")) {
   timers$with_timer("Load data (h5ad/rds)", {
     data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
   })
+
+  # Add nFeautre_RNA to DS
+  if ("nFeature_RNA" %in% colnames(seurat_obj@meta.data)) {
+  print("Warning: nFeature_RNA already exists. It will be overwritten.")
+  }
+  assay_name <- "RNA" 
+  if (!assay_name %in% Assays(seurat_obj)) {
+    stop(paste("Assay '", assay_name, "' not found in the Seurat object. Available assays are: ",
+              paste(Assays(seurat_obj), collapse=", ")))
+  }
+  counts_matrix <- GetAssayData(object = seurat_obj, assay = assay_name, slot = "counts")
+  nFeature_RNA_values <- Matrix::colSums(counts_matrix > 0)
+  seurat_obj$nFeature_RNA <- nFeature_RNA_values
+
+  # --- Verification ---
+  print("Metadata after adding nFeature_RNA:")
+  print(head(seurat_obj@meta.data))
+
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
 
