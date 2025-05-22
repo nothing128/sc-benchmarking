@@ -57,7 +57,7 @@ for (size in c("20K")) {
 
   # --- Verification ---
   print("Metadata after adding nFeature_RNA:")
-  print(head(seurat_obj@meta.data))
+  print(head(data@meta.data))
 
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
