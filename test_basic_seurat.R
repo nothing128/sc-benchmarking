@@ -43,17 +43,17 @@ for (size in c("20K")) {
   })
 
   # Add nFeautre_RNA to DS
-  if ("nFeature_RNA" %in% colnames(seurat_obj@meta.data)) {
+  if ("nFeature_RNA" %in% colnames(data@meta.data)) {
   print("Warning: nFeature_RNA already exists. It will be overwritten.")
   }
   assay_name <- "RNA" 
-  if (!assay_name %in% Assays(seurat_obj)) {
+  if (!assay_name %in% Assays(data)) {
     stop(paste("Assay '", assay_name, "' not found in the Seurat object. Available assays are: ",
-              paste(Assays(seurat_obj), collapse=", ")))
+              paste(Assays(data), collapse=", ")))
   }
-  counts_matrix <- GetAssayData(object = seurat_obj, assay = assay_name, slot = "counts")
+  counts_matrix <- GetAssayData(object = data, assay = assay_name, slot = "counts")
   nFeature_RNA_values <- Matrix::colSums(counts_matrix > 0)
-  seurat_obj$nFeature_RNA <- nFeature_RNA_values
+  data$nFeature_RNA <- nFeature_RNA_values
 
   # --- Verification ---
   print("Metadata after adding nFeature_RNA:")
