@@ -64,6 +64,7 @@ for (size in c("20K")) {
 
   timers$with_timer("Quality control", {
     data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
+    print(head(data@meta.data))
     data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
   })
 
