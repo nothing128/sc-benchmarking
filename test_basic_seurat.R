@@ -51,20 +51,21 @@ for (size in c("20K")) {
     stop(paste("Assay '", assay_name, "' not found in the Seurat object. Available assays are: ",
               paste(Assays(data), collapse=", ")))
   }
-  counts_matrix <- GetAssayData(object = data, assay = assay_name, slot = "counts")
+  counts_matrix <- GetAssayData(object = data, assay = assay_name, layer = "counts")
   nFeature_RNA_values <- Matrix::colSums(counts_matrix > 0)
   data$nFeature_RNA <- nFeature_RNA_values
 
   # --- Verification ---
   print("Metadata after adding nFeature_RNA:")
-  print(head(data@meta.data))
+  print(data@meta.data)
 
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
 
   timers$with_timer("Quality control", {
     data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
-    print(head(data@meta.data))
+    print(data@meta.data)
+    print(summary(data$percent.mt))
     data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
   })
 
