@@ -12,7 +12,7 @@ source(file.path("utils_local.R"))
 
 system_info()
 
-for (size in c("20K")) {  
+for (size in c("400K")) {  
   timers = TimerCollection(silent = FALSE)
 
   # timers$with_timer("Load data (10X mtx)", {
@@ -42,7 +42,7 @@ for (size in c("20K")) {
     data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
   })
 
-  # Add nFeautre_RNA to DS
+  # Add nFeautre_RNA to DS TODO: should this be part of QC
   if ("nFeature_RNA" %in% colnames(data@meta.data)) {
   print("Warning: nFeature_RNA already exists. It will be overwritten.")
   }
@@ -55,18 +55,15 @@ for (size in c("20K")) {
   nFeature_RNA_values <- Matrix::colSums(counts_matrix > 0)
   data$nFeature_RNA <- nFeature_RNA_values
 
-  # --- Verification ---
-  print("Metadata after adding nFeature_RNA:")
-  print(data@meta.data)
 
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
 
   timers$with_timer("Quality control", {
-    data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
-    print(data@meta.data)
-    print(summary(data$percent.mt))
-    data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
+    # data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
+    # print(summary(data$percent.mt)) # TODO: all NAs???
+    # data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
+    data <- subset(data, subset = nFeature_RNA > 200)
   })
 
   data <- subset(data, subset = tmp_passed_QC == TRUE)
