@@ -12,6 +12,7 @@ from timeit import default_timer
 import subprocess
 import time
 import io
+import gc
 
 delay=0.1
 def write_to_mtx(adata, output_dir):
@@ -127,6 +128,7 @@ class TimerMemoryCollection:
                     'aborted': aborted
                     
                 }
+                gc.collect()
         return timer()
     
     def print_summary(self, sort=True, unit=None):

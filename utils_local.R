@@ -59,7 +59,7 @@ TimerCollection = function(silent = TRUE) {
         cat(sprintf('%s %s %s\n\n', message, status, time_str))
       }
     })
-    
+    gc()
     return(invisible(result))
   }
   
