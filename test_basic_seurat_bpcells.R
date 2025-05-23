@@ -1,4 +1,5 @@
-install.packages(Azimuth)
+install.packages("remotes")
+remotes::install_github("satijalab/azimuth")
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
