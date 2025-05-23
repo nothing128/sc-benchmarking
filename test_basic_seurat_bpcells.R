@@ -50,30 +50,30 @@ for (size in c("20K")) {
   })
 
   # Add nFeautre_RNA to DS TODO: should this be part of QC
-  if ("nFeature_RNA" %in% colnames(data@meta.data)) {
-  print("Warning: nFeature_RNA already exists. It will be overwritten.")
-  }
-  assay_name <- "RNA" 
-  if (!assay_name %in% Assays(data)) {
-    stop(paste("Assay '", assay_name, "' not found in the Seurat object. Available assays are: ",
-              paste(Assays(data), collapse=", ")))
-  }
-  counts_matrix <- GetAssayData(object = data, assay = assay_name, layer = "counts")
-  nFeature_RNA_values <- Matrix::colSums(counts_matrix > 0)
-  data$nFeature_RNA <- nFeature_RNA_values
+  # if ("nFeature_RNA" %in% colnames(data@meta.data)) {
+  # print("Warning: nFeature_RNA already exists. It will be overwritten.")
+  # }
+  # assay_name <- "RNA" 
+  # if (!assay_name %in% Assays(data)) {
+  #   stop(paste("Assay '", assay_name, "' not found in the Seurat object. Available assays are: ",
+  #             paste(Assays(data), collapse=", ")))
+  # }
+  # counts_matrix <- GetAssayData(object = data, assay = assay_name, layer = "counts")
+  # nFeature_RNA_values <- Matrix::colSums(counts_matrix > 0)
+  # data$nFeature_RNA <- nFeature_RNA_values
 
 
   # Note: QC filters are matched across libraries for timing, then 
   # standardized by filtering to single_cell.py QC cells, not timed 
 
   timers$with_timer("Quality control", {
-    # data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
-    # print(summary(data$percent.mt)) # TODO: all NAs???
-    # data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
-    data <- subset(data, subset = nFeature_RNA > 200)
+    data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
+    print(summary(data$percent.mt)) # TODO: all NAs???
+    data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
+    # data <- subset(data, subset = nFeature_RNA > 200)
   })
 
-  data <- subset(data, subset = tmp_passed_QC == TRUE)
+  # data <- subset(data, subset = tmp_passed_QC == TRUE)
   print(paste0('cells: ', ncol(data), ', genes: ', nrow(data)))
 
   # Note: No doublet detection offered in Seurat
