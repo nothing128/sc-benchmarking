@@ -77,7 +77,7 @@ for (size in c("20K")) {
   print(paste0('cells: ', ncol(data), ', genes: ', nrow(data)))
 
   # Note: No doublet detection offered in Seurat
-
+  print(class(data))
   timers$with_timer("Normalization", {
     data <- multiply_cols(data, 1/Matrix::colSums(data))
     data <- log1p(data * 10000)
