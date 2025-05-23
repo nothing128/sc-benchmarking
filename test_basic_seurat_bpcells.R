@@ -67,24 +67,20 @@ for (size in c("20K")) {
   # standardized by filtering to single_cell.py QC cells, not timed 
 
   timers$with_timer("Quality control", {
-    pass_atac <- atac_qc %>%
-      dplyr::filter(nFrags > 1000, TSSEnrichment > 10) %>%
-      dplyr::pull(cellName)
-    pass_rna <- colnames(data)[Matrix::colSums(data) > 1e3]
-    keeper_cells <- intersect(pass_atac, pass_rna)
-    frags <- frags_raw %>% select_cells(keeper_cells)
-    keeper_genes <- Matrix::rowSums(data) > 3
-    data <- data[keeper_genes,keeper_cells]
+    data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
+    print(summary(data$percent.mt)) # TODO: all NAs???
+    data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
+    data <- subset(data, subset = nFeature_RNA > 200)
   })
 
   # data <- subset(data, subset = tmp_passed_QC == TRUE)
   print(paste0('cells: ', ncol(data), ', genes: ', nrow(data)))
 
   # Note: No doublet detection offered in Seurat
-  print(class(data))
+
   timers$with_timer("Normalization", {
-    data <- multiply_cols(data, 1/Matrix::colSums(data))
-    data <- log1p(data * 10000)
+    data <- NormalizeData(
+      data, normalization.method = "LogNormalize", scale.factor = 10000)
   })
 
   timers$with_timer("Feature selection", {
