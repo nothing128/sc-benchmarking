@@ -73,7 +73,7 @@ for (size in c("20K")) {
     # data <- subset(data, subset = nFeature_RNA > 200)
   })
 
-  data <- subset(data, subset = tmp_passed_QC == TRUE)
+  # data <- subset(data, subset = tmp_passed_QC == TRUE)
   print(paste0('cells: ', ncol(data), ', genes: ', nrow(data)))
 
   # Note: No doublet detection offered in Seurat
