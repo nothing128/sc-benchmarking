@@ -1,3 +1,7 @@
+if (!requireNamespace('remotes', quietly = TRUE)) {
+  install.packages('remotes')
+}
+remotes::install_github('satijalab/azimuth', ref = 'master')
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
@@ -6,6 +10,7 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(patchwork)
     library(hdf5r)
+    library(Azimuth)
 })
 
 work_dir = "projects/rrg-wainberg/lamming6/sc-benchmarking"
@@ -45,6 +50,13 @@ for (size in c("400K")) {
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5")
     )
     # Write the matrix to a directory
+    write_matrix_dir(
+      mat = mat_raw,
+      dir = work_dir
+    )
+    # Now that we have the matrix on disk, we can load it
+    mat <- open_matrix_dir(dir = work_dir)
+    mat <- Azimuth:::ConvertEnsembleToSymbol(mat = mat, species = "human")
     
     data <- CreateSeuratObject(counts = mat_raw)
   })
