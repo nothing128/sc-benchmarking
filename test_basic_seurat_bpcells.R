@@ -70,7 +70,7 @@ for (size in c("20K")) {
     data[["percent.mt"]] <- PercentageFeatureSet(data, pattern = "^MT-")
     print(summary(data$percent.mt)) # TODO: all NAs???
     data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
-    data <- subset(data, subset = nFeature_RNA > 200)
+    # data <- subset(data, subset = nFeature_RNA > 200)
   })
 
   # data <- subset(data, subset = tmp_passed_QC == TRUE)
