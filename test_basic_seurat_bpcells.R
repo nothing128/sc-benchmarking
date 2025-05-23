@@ -1,7 +1,3 @@
-if (!requireNamespace('remotes', quietly = TRUE)) {
-  install.packages('remotes')
-}
-remotes::install_github('satijalab/azimuth', ref = 'master')
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
