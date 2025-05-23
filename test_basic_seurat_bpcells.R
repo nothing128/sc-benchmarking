@@ -1,3 +1,4 @@
+setRepositories(ind = 1:3, addURLs = c('https://satijalab.r-universe.dev', 'https://bnprks.r-universe.dev/'))
 install.packages(BPCells)
 
 suppressPackageStartupMessages({
