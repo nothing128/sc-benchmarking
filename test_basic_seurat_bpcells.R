@@ -1,4 +1,4 @@
-packages.install(BPCells)
+install.packages(BPCells)
 
 suppressPackageStartupMessages({
     library(dplyr)
