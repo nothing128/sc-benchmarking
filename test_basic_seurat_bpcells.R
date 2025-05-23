@@ -46,7 +46,7 @@ for (size in c("20K")) {
     )
     # Write the matrix to a directory
     
-    data <- CreateSeuratObject(counts = data.mat)
+    data <- CreateSeuratObject(counts = mat_raw)
   })
 
   # Add nFeautre_RNA to DS TODO: should this be part of QC
