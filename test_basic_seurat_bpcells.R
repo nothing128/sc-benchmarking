@@ -89,6 +89,8 @@ for (size in c("20K")) {
   })
 
   timers$with_timer("PCA", {
+    all.genes <- rownames(data)
+    data <- ScaleData(data, features = all.genes)
     svd <- BPCells::svds(data, k=VariableFeatures(object = data))
     # Alternate option: irlba::irlba(mat_norm, nv=50)
     data <- multiply_cols(svd$v, svd$d)
