@@ -1,3 +1,4 @@
+install.packages(Azimuth)
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
