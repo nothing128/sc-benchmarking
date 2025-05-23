@@ -3,7 +3,6 @@ suppressPackageStartupMessages({
     library(BPCells)
     library(Seurat)
     library(SeuratObject)
-    library(SeuratDisk)
     library(ggplot2)
     library(patchwork)
     library(hdf5r)
