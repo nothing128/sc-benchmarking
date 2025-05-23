@@ -1,10 +1,11 @@
+packages.install(BPCells)
+
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
     library(Seurat)
     library(SeuratObject)
     library(SeuratDisk)
-    library(Azimuth)
     library(ggplot2)
     library(patchwork)
     library(hdf5r)
