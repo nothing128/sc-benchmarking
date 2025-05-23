@@ -14,7 +14,7 @@ source(file.path("utils_local.R"))
 
 system_info()
 
-for (size in c("400K")) {  
+for (size in c("20K")) {  
   timers = TimerCollection(silent = FALSE)
 
   # timers$with_timer("Load data (10X mtx)", {
@@ -42,7 +42,7 @@ for (size in c("400K")) {
 
   timers$with_timer("Load data (h5ad/rds)", {
     mat_raw <- open_matrix_10x_hdf5(
-      path = paste0(data_dir, "/SEAAD_raw_", size)
+      path = paste0(data_dir, "/SEAAD_raw_", size,".h5")
     )
     # Write the matrix to a directory
     
