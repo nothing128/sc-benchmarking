@@ -94,7 +94,7 @@ for (size in c("20K")) {
     num_features <- VariableFeatures(object = data)
     svd <- BPCells::svds(data, k=num_features)
     # # Alternate option: irlba::irlba(mat_norm, nv=50)
-    data <- multiply_cols(svd$v, svd$d)
+    # data <- multiply_cols(svd$v, svd$d)
     # data <- RunPCA(data, features = VariableFeatures(object = data))
   })
 
