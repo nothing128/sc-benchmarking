@@ -1,4 +1,5 @@
 setRepositories(ind = 1:3, addURLs = c('https://satijalab.r-universe.dev', 'https://bnprks.r-universe.dev/'))
+remotes::install_github("bnprks/BPCells/r")
 install.packages(BPCells)
 
 suppressPackageStartupMessages({
