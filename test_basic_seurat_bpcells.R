@@ -45,13 +45,14 @@ for (size in c("20K")) {
     mat_raw <- open_matrix_10x_hdf5(
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5")
     )
+    dir_path <- paste0(work_dir, "/matrix")
     # Write the matrix to a directory
     write_matrix_dir(
       mat = mat_raw,
-      dir = work_dir
+      dir = dir_path
     )
     # Now that we have the matrix on disk, we can load it
-    dir_path <- paste0(work_dir, "/matrix")
+    
     print(dir_path)
     mat <- open_matrix_dir(dir = dir_path)
     
