@@ -56,7 +56,7 @@ for (size in c("400K")) {
     
     mat <- open_matrix_dir(dir = dir_path)
     
-    data <- CreateSeuratObject(counts = mat_raw)
+    data <- CreateSeuratObject(counts = mat)
   })
 
   # Add nFeautre_RNA to DS TODO: should this be part of QC
