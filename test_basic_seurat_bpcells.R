@@ -1,5 +1,12 @@
-install.packages("remotes")
-remotes::install_github("satijalab/azimuth")
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("glmGamPoi")
+BiocManager::install("TFBSTools")
+BiocManager::install("EnsDb.Hsapiens.v86")
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
+setRepositories(ind=1:3) # needed to automatically install Bioconductor dependencies
+install.packages("Signac")
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
