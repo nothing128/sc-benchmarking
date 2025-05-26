@@ -51,6 +51,7 @@ for (size in c("20K")) {
       dir = work_dir
     )
     # Now that we have the matrix on disk, we can load it
+    dir_path <- paste0(work_dir, "/matrix")
     mat <- open_matrix_dir(dir = work_dir)
     
     data <- CreateSeuratObject(counts = mat_raw)
