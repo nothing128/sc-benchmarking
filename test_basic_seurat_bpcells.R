@@ -45,6 +45,7 @@ for (size in c("20K")) {
     mat_raw <- open_matrix_10x_hdf5(
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5")
     )
+    mat_raw <- convert_matrix_type(mat_raw, type = "uint32_t")
     dir_path <- paste0(work_dir, "/matrix")
     # Write the matrix to a directory
     write_matrix_dir(
