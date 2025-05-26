@@ -1,11 +1,3 @@
-BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
-library(BSgenome.Hsapiens.UCSC.hg38)
-
-
-if (!requireNamespace('remotes', quietly = TRUE)) {
-  install.packages('remotes')
-}
-remotes::install_github('satijalab/azimuth', ref = 'master')
 suppressPackageStartupMessages({
     library(dplyr)
     library(BPCells)
