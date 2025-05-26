@@ -1,7 +1,6 @@
 BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
 library(BSgenome.Hsapiens.UCSC.hg38)
-install.packages("Signac")
-library(Signac)
+
 
 if (!requireNamespace('remotes', quietly = TRUE)) {
   install.packages('remotes')
