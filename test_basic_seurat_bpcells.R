@@ -14,7 +14,7 @@ suppressPackageStartupMessages({
     library(ggplot2)
     library(patchwork)
     library(hdf5r)
-    library(Azimuth)
+    
 })
 
 work_dir = "projects/rrg-wainberg/lamming6/sc-benchmarking"
@@ -60,7 +60,7 @@ for (size in c("20K")) {
     )
     # Now that we have the matrix on disk, we can load it
     mat <- open_matrix_dir(dir = work_dir)
-    mat <- Azimuth:::ConvertEnsembleToSymbol(mat = mat, species = "human")
+    mat <- ConvertEnsembleToSymbol(mat = mat, species = "human")
     
     data <- CreateSeuratObject(counts = mat_raw)
   })
