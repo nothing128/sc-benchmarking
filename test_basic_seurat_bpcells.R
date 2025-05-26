@@ -151,7 +151,7 @@ for (size in c("20K")) {
     row.names = FALSE)
 }
 
-'''
+print("
 --- Timing Summary 20K ---
 Load data (h5ad/rds) took 12s 254ms (4.3%)
 Quality control took 6s 109ms (2.1%)
@@ -166,4 +166,4 @@ Find markers took 2m 47s (58.6%)
 
 Total time: 4m 45s
 
-'''
+")
