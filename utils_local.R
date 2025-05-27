@@ -181,6 +181,7 @@ TimerCollection = function(silent = TRUE) {
       max_mem = info$max_mem/1024/1024
       mem_percent = info$mem_percent
 
+
       status = if (info$aborted) 'aborted after' else 'took'
       time_str = format_time(duration, unit)
       
@@ -197,7 +198,10 @@ TimerCollection = function(silent = TRUE) {
         duration = numeric(0),
         duration_unit = character(0),
         aborted = logical(0),
-        percentage = numeric(0)
+        percentage = numeric(0),
+        memory = numeric(0),
+        memory_unit = character(0),
+        percent_mem = numeric(0)
       ))
     }
     
@@ -212,6 +216,7 @@ TimerCollection = function(silent = TRUE) {
     
     ops = items
     durs = sapply(items, function(msg) env$timings[[msg]]$duration)
+
     
     if (!is.null(unit)) {
       durs = switch(unit,
@@ -233,13 +238,18 @@ TimerCollection = function(silent = TRUE) {
     pcts = sapply(items, function(msg) {
       if (total > 0) (env$timings[[msg]]$duration / total) * 100 else 0
     })
-    
+    memory = sapply(items, function(msg) env$timings[[msg]]$max_mem)
+    memory_unit = sapply(items, function(msg) {"GiB"})
+    percent_mem = sapply(items, function(msg) env$timings[[msg]]$mem_percent)
     data.frame(
       operation = ops,
       duration = durs,
       duration_unit = duration_unit,
       aborted = aborts,
-      percentage = pcts
+      percentage = pcts,
+      memory = memory,
+      memory_unit = memory_unit,
+      percent_mem = percent_mem
     )
   }
   

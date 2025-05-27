@@ -256,7 +256,7 @@ class TimerMemoryCollection:
             'operation': ops, 'duration': durs,
             'duration_unit': [duration_unit] * len(ops),
             'aborted': aborts, 'percentage': pcts,
-            'memory': memory, 'memory_unit' : memory_unit,'%mem': percent_mem
+            'memory': memory, 'memory_unit': memory_unit, 'percent_mem': percent_mem
         })
     
 def system_info():
