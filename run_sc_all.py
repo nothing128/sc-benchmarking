@@ -9,4 +9,4 @@ params = itertools.product(
 )
 
 for size, num_threads, subset in params:
-    run_slurm(f"python test_sc.py {num_threads} {size} {subset}")
+    run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
