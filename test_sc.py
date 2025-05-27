@@ -143,12 +143,7 @@ print(f'{size=}, {num_threads=}, {subset=}')
 timers.print_summary(sort=False)
 
 df = timers\
-    .to_dataframe(sort=False, unit='s')\
-    .with_columns(
-        pl.lit('basic').alias('vignette'),
-        pl.lit(size).alias('size'),
-        pl.lit(num_threads).alias('num_threads'),
-        pl.lit(subset).alias('subset'))
+    .to_dataframe(sort=False, unit='s')
 
 all_timers.append(df)
 del data, timers, df; gc.collect()
