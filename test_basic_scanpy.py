@@ -4,7 +4,7 @@ import scanpy as sc
 import polars as pl
 import matplotlib.pyplot as plt
 
-work_dir = 'projects/sc-benchmarking'
+work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
 data_dir = 'single-cell/SEAAD/subsampled'
 sys.path.append(work_dir)
 
