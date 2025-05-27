@@ -98,6 +98,12 @@ for (size in c("400K")) {
       data, selection.method = "vst", nfeatures = 2000)  
   })
 
+  print(timers_df)
+
+  write.csv(timers_df, 
+    paste0(work_dir, "/output/test_basic_seurat_", size, ".csv"), 
+    row.names = FALSE)
+
   timers$with_timer("PCA", {
     all.genes <- rownames(data)
     data <- ScaleData(data, features = all.genes)
