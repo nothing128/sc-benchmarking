@@ -15,7 +15,7 @@ source(file.path("utils_local.R"))
 
 system_info()
 
-for (size in c("400K")) {  
+for (size in c("20K")) {  
   timers = TimerCollection(silent = FALSE)
 
   # timers$with_timer("Load data (10X mtx)", {
