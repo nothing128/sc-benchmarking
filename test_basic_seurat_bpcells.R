@@ -9,7 +9,7 @@ suppressPackageStartupMessages({
     
 })
 
-work_dir = "projects/rrg-wainberg/lamming6/sc-benchmarking"
+work_dir = "projects/sc-benchmarking"
 data_dir = "single-cell/SEAAD/subsampled"
 source(file.path("utils_local.R"))
 
@@ -148,7 +148,7 @@ for (size in c("400K")) {
   print(timers_df)
 
   write.csv(timers_df, 
-    paste0(work_dir, "/output/test_basic_seurat_", size, ".csv"), 
+    paste0(work_dir, "/output/test_basic_seurat_bpcells_", size, ".csv"), 
     row.names = FALSE)
 }
 
