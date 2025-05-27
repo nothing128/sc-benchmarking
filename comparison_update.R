@@ -11,7 +11,7 @@ setwd(work_dir)
 results <- do.call(
     rbind, 
     lapply(list.files(path = "output", 
-    pattern = "test_basic_", full.names = TRUE), read.csv)) %>%
+    pattern = "^(test_basic_).*(.csv)$", full.names = TRUE), read.csv)) %>%
     filter(!operation %in% c("Load data (10X mtx)", "Load data (h5)")) %>%
     mutate(size = factor(size, levels = c("20K", "400K", "1M")),
            operation = factor(operation, 
