@@ -5,7 +5,7 @@ suppressPackageStartupMessages({
   library(cowplot)  
 })
 
-work_dir <- 'projects/rrg-wainberg/lamming6/sc-benchmarking/output'
+work_dir <- '/output'
 setwd(work_dir)
 
 results <- do.call(

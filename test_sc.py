@@ -146,7 +146,9 @@ df = timers\
     .to_dataframe(sort=False, unit='s')\
     .with_columns(
         pl.lit('basic').alias('test'),
-        pl.lit(size).alias('size'))
+        pl.lit(size).alias('size'),
+        pl.lit(num_threads).alias('num_threads'),
+        pl.lit(subset).alias('subset'))
 
 all_timers.append(df)
 del data, timers, df; gc.collect()
