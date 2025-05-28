@@ -29,7 +29,7 @@ size_options = ['20K', '400K', '1M']
 
 system_info()
 
-if len(sys.argv != 4):
+if len(sys.argv) != 4:
     print(f"Usage: python {sys.argv[0]} [num_threads_options] [subset_options] [size_options]")
     print("num_threads_options must be -1 or 1")
     print("subset_options must be True or False")     
