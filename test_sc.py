@@ -22,18 +22,9 @@ sys.path.append(work_dir)
 if os.path.exists(log_file):
     os.remove(log_file)
 
-
-system_info()
-
 num_threads_options = [-1, 1]
 subset_options = ["True", "False"]
 size_options = ['20K', '400K', '1M']
-all_timers = []
-delay = 0.15
-num_threads = int(sys.argv[1])
-subset = (True if sys.argv[2]=="True" else False)
-size = sys.argv[3]
-
 if ("-h" in sys.argv) or \
     (num_threads not in num_threads_options) or \
     (sys.argv[2] not in subset_options) or\
@@ -43,6 +34,17 @@ if ("-h" in sys.argv) or \
     print("subset_options must be True or False")     
     print("size_options must be 20K or 400K or 1M")
     exit(1)
+
+system_info()
+
+
+all_timers = []
+delay = 0.15
+num_threads = int(sys.argv[1])
+subset = (True if sys.argv[2]=="True" else False)
+size = sys.argv[3]
+
+
 
 timers = TimerMemoryCollection(silent=True)
 
