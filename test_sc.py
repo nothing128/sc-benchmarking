@@ -97,11 +97,9 @@ with timers('PCA'):
 if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
 
-with timers('KNN'):
-    data = data.neighbors(num_threads=num_threads)
-
-with timers('SNN'):
-    data = data.shared_neighbors(num_threads=num_threads)
+with timers('Neighbor Graph'):
+    data = data.neighbors(num_threads=num_threads) # KNN
+    data = data.shared_neighbors(num_threads=num_threads) # SNN
 
 # TODO: The number of clusters needs to match across libraries
 with timers('Clustering (3 resolutions)'):
