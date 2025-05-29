@@ -136,19 +136,19 @@ for (size in c("400K")) {
     markers = FindAllMarkers(data, only.pos = TRUE)
   })
 
-  timers$with_timer("Save data", {
-    saveRDS(data, paste0(work_dir, "/output/test_write.rds"))
-  })
+  # timers$with_timer("Save data", {
+  #   saveRDS(data, paste0(work_dir, "/output/test_write.rds"))
+  # })
 
   timers$print_summary(sort = FALSE)
   timers_df = timers$to_dataframe(unit = "s", sort = FALSE)
-  timers_df$test = 'test_basic_seurat'
+  timers_df$test = 'test_seurat_bpcells'
   timers_df$size = size
 
   print(timers_df)
 
   write.csv(timers_df, 
-    paste0(work_dir, "/output/test_basic_seurat_bpcells_", size, ".csv"), 
+    paste0(work_dir, "/output/test_seurat_bpcells_", size, ".csv"), 
     row.names = FALSE)
 }
 

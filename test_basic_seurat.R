@@ -115,9 +115,9 @@ for (size in c("400K")) {
     markers = FindAllMarkers(data, only.pos = TRUE)
   })
 
-  timers$with_timer("Save data", {
-    saveRDS(data, paste0(work_dir, "/output/test_write.rds"))
-  })
+  # timers$with_timer("Save data", {
+  #   saveRDS(data, paste0(work_dir, "/output/test_write.rds"))
+  # })
 
   timers$print_summary(sort = FALSE)
   timers_df = timers$to_dataframe(unit = "s", sort = FALSE)

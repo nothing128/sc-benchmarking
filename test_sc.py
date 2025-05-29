@@ -58,7 +58,7 @@ timers = TimerMemoryCollection(silent=True)
 
 # Note: Loading is much slower from $scratch disk
 
-with timers('Load data'):
+with timers('Load data (h5ad/rds)'):
     data = SingleCell(
         f'{data_dir}/SEAAD_raw_{size}.h5ad',
         num_threads=1)
@@ -107,7 +107,7 @@ with timers('PCA'):
 if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
 
-with timers('Neighbor Graph'):
+with timers('Neighbor graph'):
     data = data.neighbors(num_threads=num_threads) # KNN
     data = data.shared_neighbors(num_threads=num_threads) # SNN
 
@@ -153,7 +153,7 @@ timers.print_summary(sort=False)
 df = timers\
     .to_dataframe(sort=False, unit='s')\
     .with_columns(
-        pl.lit('basic').alias('test'),
+        pl.lit('test_basic_sc').alias('test'),
         pl.lit(size).alias('size'),
         pl.lit(num_threads).alias('num_threads'),
         pl.lit(subset).alias('subset'))

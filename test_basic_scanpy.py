@@ -87,7 +87,9 @@ for size in size_options:
 
     timers.print_summary(sort=False)
     timers_df = timers\
-        .to_dataframe(sort=False, unit='s')
+        .to_dataframe(sort=False, unit='s')\
+        .with_columns(pl.lit('test_basic_scanpy').alias('test'),
+                    pl.lit(size).alias('size'))
 
     print(timers_df)
     timers_df.write_csv(f'{work_dir}/output/test_basic_scanpy_{size}.csv')
