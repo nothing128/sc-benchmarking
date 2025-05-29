@@ -3,31 +3,72 @@ suppressPackageStartupMessages({
   library(ggbreak)
   library(aplot)
   library(cowplot)  
+  library(dplyr)
 })
 
-work_dir <- '/output'
-setwd(work_dir)
+work_dir <- 'output'
 
-results <- do.call(
-    rbind, 
-    lapply(list.files(path = "output", 
-    pattern = "^(test_basic_).*(.csv)$", full.names = TRUE), read.csv)) %>%
-    filter(!operation %in% c("Load data (10X mtx)", "Load data (h5)")) %>%
-    mutate(size = factor(size, levels = c("20K", "400K", "1M")),
-           operation = factor(operation, 
-            levels = c("Load data (h5ad/rds)",
-              "Quality control",
-              "Doublet detection",
-              "Feature selection",
-              "Normalization",
-              "PCA",
-              "Neighbor graph",
-              "Clustering (3 resolutions)",
-              "Embedding",
-              "Plot embeddings",
-              "Find markers")))
+results <- bind_rows( # Use bind_rows() here
+  lapply(
+    list.files(path = "output", pattern = "test_basic_", full.names = TRUE),
+    function(file_path) {
+      # Read CSV, keeping original names and strings as characters
+      df <- read.csv(file_path, check.names = FALSE, stringsAsFactors = FALSE)
+      
+      # --- Step 1: Standardize column names (stripping quotes) ---
+      current_names <- names(df)
+      new_names <- sapply(current_names, function(col_name) {
+        if (startsWith(col_name, "\"") && endsWith(col_name, "\"") && nchar(col_name) > 1) {
+          return(substr(col_name, 2, nchar(col_name) - 1))
+        } else {
+          return(col_name)
+        }
+      })
+      names(df) <- new_names # Standardized names are now active in df
+      aborted_col_standardized_name <- "aborted"
+      
+      if (aborted_col_standardized_name %in% names(df)) {
+        # Convert the 'aborted' column to character in this specific data frame
+        df[[aborted_col_standardized_name]] <- as.character(df[[aborted_col_standardized_name]])
+      }
+      return(df)
+    }
+  )
+) 
+results <- subset(results, select = -c(aborted))
 
-p <- ggplot(results, aes(x = duration, y = operation, fill = test)) +
+
+
+results <- results %>% mutate(
+  thread_str = coalesce(as.character(num_threads), "single_thread"),
+  subset_str = coalesce(as.character(subset), "subset"),
+)
+results$thread_str[results$thread_str == '1'] <- 'single_thread'
+results$thread_str[results$thread_str == '-1'] <- 'multi_thread'
+results$subset_str[results$subset_str == 'false'] <- 'no_subset'
+results$subset_str[results$subset_str == 'true'] <- 'subset'
+results$fill_group = paste(results$test, results$thread_str, results$subset_str, sep = "_")
+results$operation[results$operation == 'Load data (h5ad/rds)'] <- 'Load data'
+results$operation[results$operation == 'Clustering (3 resolutions)'] <- 'Clustering (3 res.)'
+
+results <- results %>% 
+  mutate(
+    operation = 
+      factor(
+        operation, 
+        levels = c("Load data",
+                  "Quality control",
+                  "Doublet detection",
+                  "Feature selection",
+                  "Normalization",
+                  "PCA",
+                  "Neighbor graph",
+                  "Clustering (3 res.)",
+                  "Embedding",
+                  "Plot embeddings",
+                  "Find markers")))
+
+p <- ggplot(results, aes(x = duration, y = operation, fill = fill_group)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_y_discrete(limits = rev(levels(results$operation))) +
   scale_x_continuous(expand = c(0, 0)) +
@@ -41,16 +82,20 @@ p <- ggplot(results, aes(x = duration, y = operation, fill = test)) +
 
 ggsave("figures/comparison.png", plot = p, width = 10, height = 8)
 
-my_colors <- c("test_basic_sc" = "#FF6B6B",    
-               "test_basic_scanpy" = "#4ECDC4", 
-               "test_basic_seurat" = "#45B3E0",
-               'test_basic_sc_single_thread' = '#FFD700') 
+my_colors <- c("test_basic_sc_multi_thread_subset" = "#ff0000",   
+               "test_basic_sc_multi_thread_no_subset" = '#8b0000',
+               "test_basic_scanpy_single_thread_subset" = "#CCCC00", 
+               "test_seurat_bpcells_single_thread_subset" = "#0000ff",
+               "test_basic_sc_single_thread_no_subset" = '#006400',
+               "test_basic_sc_single_thread_subset" = '#00bb00'
+               
+               ) 
 
 p_1 <- results %>% 
   filter(size == "20K") %>%
-  ggplot(aes(x = duration, y = operation, fill = test)) +
+  ggplot(aes(x = duration, y = operation, fill = fill_group)) +
   geom_bar(stat = "identity", position = "dodge") +
-  scale_x_break(c(50, 100)) +
+  scale_x_break(c(50, 100), scales = 0.5) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_discrete(limits = rev(levels(results$operation))) +
   scale_fill_manual(values = my_colors) +
@@ -61,9 +106,10 @@ p_1 <- results %>%
 
 p_2 <- results %>% 
   filter(size == "400K") %>%
-  ggplot(aes(x = duration, y = operation, fill = test)) +
+  ggplot(aes(x = duration, y = operation, fill = fill_group)) +
   geom_bar(stat = "identity", position = "dodge") +
-  scale_x_break(c(200, 2500), scales = "free") +
+  scale_x_break(c(1000, 2200), scales = 0.5) +
+  scale_x_break(c(3100, 4500), scales = 0.25) +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_discrete(limits = rev(levels(results$operation))) +
   scale_fill_manual(values = my_colors) +
@@ -74,18 +120,19 @@ p_2 <- results %>%
 
 p_3 <- results %>% 
   filter(size == "1M") %>%
-  ggplot(aes(x = duration, y = operation, fill = test)) +
+  ggplot(aes(x = duration, y = operation, fill = fill_group)) +
   geom_bar(stat = "identity", position = "dodge") +
-  scale_x_break(c(30, 40), scales = "free") +
+  scale_x_break(c(200, 900), scales = "free") +
   scale_x_continuous(expand = c(0, 0)) +
   scale_y_discrete(limits = rev(levels(results$operation))) +
-  scale_fill_manual(values = my_colors, name = "test") +
+  scale_fill_manual(values = my_colors, name = "fill_group") +
   labs(x = "Duration (s)", y = "") +
   theme_classic() +
   theme(legend.position = "none") +
   ggtitle("1M")
 
 combined_plot <- aplot::plot_list(p_1, p_2, p_3, ncol = 1)
+p_1
 ggsave("figures/comparison.png", plot = combined_plot, width = 10, height = 12)
 
 
