@@ -1,9 +1,9 @@
 suppressPackageStartupMessages({
-    library(dplyr)
-    library(Seurat)
-    library(ggplot2)
-    library(patchwork)
-    library(hdf5r)
+  library(dplyr)
+  library(Seurat)
+  library(ggplot2)
+  library(patchwork)
+  library(hdf5r)
 })
 
 work_dir = "projects/sc-benchmarking"
