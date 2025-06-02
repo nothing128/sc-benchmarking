@@ -90,7 +90,7 @@ TimerCollection = function(silent = TRUE) {
       percent <- max(df$Percentage, na.rm = TRUE)
       env$timings[[message]] = list(
         duration = duration,
-        max_mem= peak_mem,
+        max_mem= peak_mem/1024/1024,
         mem_percent = percent,
         aborted = aborted
       )
@@ -239,7 +239,7 @@ TimerCollection = function(silent = TRUE) {
       if (total > 0) (env$timings[[msg]]$duration / total) * 100 else 0
     })
     memory = sapply(items, function(msg) env$timings[[msg]]$max_mem)
-    memory_unit = sapply(items, function(msg) {"KiB"})
+    memory_unit = sapply(items, function(msg) {"GiB"})
     percent_mem = sapply(items, function(msg) env$timings[[msg]]$mem_percent)
     data.frame(
       operation = ops,
