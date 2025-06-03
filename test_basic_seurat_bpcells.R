@@ -167,7 +167,7 @@ for (size in c(args)) {
     i = 1
     partial_output2 = paste0(partial_output1,"_",i)
     while (file.exists(partial_output2)) {
-      i += 1
+      i <- i + 1
       partial_output2 = paste0(partial_output1,"_",i)
     }
         
