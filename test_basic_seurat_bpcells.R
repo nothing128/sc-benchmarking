@@ -166,7 +166,7 @@ for (size in c(args)) {
   partial_output = paste0(work_dir, "/output/test_seurat_bpcells_", size)
     i = 1
     output = paste0(partial_output,"_",i,".csv")
-    while (file.exists(partial_output2)) {
+    while (file.exists(partial_output)) {
       i <- i + 1
       output = paste0(partial_output,"_",i,".csv")
     }
