@@ -3,6 +3,7 @@ import sys
 import scanpy as sc
 import polars as pl
 import matplotlib.pyplot as plt
+import os
 
 work_dir = 'projects/rrg-wainberg/lamming6/sc-benchmarking'
 data_dir = 'single-cell/SEAAD/subsampled'
@@ -92,7 +93,14 @@ for size in size_choice:
                     pl.lit(size).alias('size'))
 
     print(timers_df)
-    timers_df.write_csv(f'{work_dir}/output/test_basic_scanpy_{size}.csv')
+    partial_output1 = f'{work_dir}/output/test_basic_scanpy_{size}'
+    i = 1
+    partial_output2 = f"{partial_output1}_{i}"
+    while os.path.exists(partial_output2):
+        i += 1
+        partial_output2 = f"{partial_output1}_{i}"
+        
+    timers_df.write_csv(f'{partial_output2}.csv')
 
     del timers, timers_df, data; gc.collect()
 
