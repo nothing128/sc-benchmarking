@@ -14,18 +14,18 @@ data_dir = "single-cell/SEAAD/subsampled"
 source(file.path("utils_local.R"))
 size_options <- c("20K","400K","1M")
 system_info()
-args = commandArgs(trailingOnly=TRUE)
-print(args[0])
-if (length(args)!=1) {
-  str<-paste0("Expected 1 argument, found ", length(args))
+args = commandArgs()
+print(args)
+if (length(args)!=2) {
+  str<-paste0("Expected 2 arguments, found ", length(args))
   print(str)
   quit()
-} else if (!(args[0] %in% size_options)) {
+} else if (!(args[1] %in% size_options)) {
   str<-paste0("argument must be one of ", size_options)
   print(str)
   quit()
 }
-for (size in c(args[0])) {  
+for (size in c(args[1])) {  
   timers = TimerCollection(silent = FALSE)
 
   # timers$with_timer("Load data (10X mtx)", {
