@@ -12,10 +12,17 @@ suppressPackageStartupMessages({
 work_dir = "projects/sc-benchmarking"
 data_dir = "single-cell/SEAAD/subsampled"
 source(file.path("utils_local.R"))
-
+size_options <- c("20K","400K","1M")
 system_info()
-
-for (size in c("1M")) {  
+args = commandArgs(trailingOnly=TRUE)
+if (length(args)!=2) {
+  str<-paste0("Expected 2 arguments, found ", length(args))
+  quit()
+} else if (!(args[1] %in% size_options)) {
+  str<-paste0("argument must be one of ", size_options)
+  quit()
+}
+for (size in c(args[1])) {  
   timers = TimerCollection(silent = FALSE)
 
   # timers$with_timer("Load data (10X mtx)", {
@@ -46,7 +53,14 @@ for (size in c("1M")) {
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5")
     )
     mat_raw <- convert_matrix_type(mat_raw, type = "uint32_t")
-    dir_path <- "matrix"
+
+    i<-1
+    dir_path <- paste0("matrix",i)
+    while (file.exists(dir_path)) { # possible race condition here
+      i <- i + 1
+      dir_path <- paste0("matrix",i)
+    }
+    
     # Write the matrix to a directory
     write_matrix_dir(
       mat = mat_raw,
@@ -150,6 +164,7 @@ for (size in c("1M")) {
   write.csv(timers_df, 
     paste0(work_dir, "/output/test_seurat_bpcells_", size, ".csv"), 
     row.names = FALSE)
+  unlink(dir_path, recursive=TRUE)
 }
 
 print("

@@ -82,13 +82,13 @@ p <- ggplot(results, aes(x = duration, y = operation, fill = fill_group)) +
 
 ggsave("figures/comparison.png", plot = p, width = 10, height = 8)
 
-my_colors <- c("test_basic_sc_multi_thread_subset" = "#ff0000",   
-               "test_basic_sc_multi_thread_no_subset" = '#8b0000',
-               "test_basic_scanpy_single_thread_subset" = "#CCCC00", 
-               "test_seurat_bpcells_single_thread_subset" = "#0000ff",
-               "test_basic_sc_single_thread_no_subset" = '#006400',
-               "test_basic_sc_single_thread_subset" = '#00bb00',
-               "test_basic_seurat_single_thread_subset" = "#00008B"
+my_colors <- c("test_basic_sc_multi_thread_subset" = "#aec6e7",   
+               "test_basic_sc_multi_thread_no_subset" = '#1f78b4',
+               "test_basic_scanpy_single_thread_subset" = "#bcbd23", 
+               "test_seurat_bpcells_single_thread_subset" = "#97df89",
+               "test_basic_sc_single_thread_no_subset" = '#fe7f0e',
+               "test_basic_sc_single_thread_subset" = '#ffbb77',
+               "test_basic_seurat_single_thread_subset" = "#2ba02d"
                
                ) 
 
@@ -161,17 +161,6 @@ p <- ggplot(results, aes(x = memory, y = operation, fill = fill_group)) +
 
 ggsave("figures/memory_comparison.png", plot = p, width = 10, height = 8)
 
-
-
-my_colors <- c("test_basic_sc_multi_thread_subset" = "#ff0000",   
-               "test_basic_sc_multi_thread_no_subset" = '#8b0000',
-               "test_basic_scanpy_single_thread_subset" = "#CCCC00", 
-               "test_seurat_bpcells_single_thread_subset" = "#0000ff",
-               "test_basic_sc_single_thread_no_subset" = '#006400',
-               "test_basic_sc_single_thread_subset" = '#00bb00',
-               "test_basic_seurat_single_thread_subset" = "#00008B"
-               
-) 
 
 p_1 <- results %>% 
   filter(size == "20K") %>%
