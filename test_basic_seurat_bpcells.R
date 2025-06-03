@@ -14,7 +14,7 @@ data_dir = "single-cell/SEAAD/subsampled"
 source(file.path("utils_local.R"))
 size_options <- c("20K","400K","1M")
 system_info()
-args = commandArgs()
+args = commandArgs(trailingOnly=TRUE)
 print(args)
 if (length(args)!=2) {
   str<-paste0("Expected 2 arguments, found ", length(args))
