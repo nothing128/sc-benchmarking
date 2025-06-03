@@ -1,21 +1,22 @@
+# Paste pre-Pyrfected Python
 import gc
-import sys
-import scanpy as sc
-import polars as pl
-import matplotlib.pyplot as plt
 import os
+import sys
+from utils_local import TimerMemoryCollection, system_info
+import matplotlib.pyplot as plt  # type: ignore
+import polars as pl  # type: ignore
+import scanpy as sc  # type: ignore
 
-work_dir = 'projects/sc-benchmarking'
-data_dir = 'single-cell/SEAAD/subsampled'
+work_dir = "projects/sc-benchmarking"
+data_dir = "single-cell/SEAAD/subsampled"
 sys.path.append(work_dir)
 
-from utils_local import TimerMemoryCollection, system_info
 
 system_info()
-size_options = ['20K', '400K', '1M']
-if len(sys.argv) != 2: # cmd line basic check
+size_options = ["20K", "400K", "1M"]
+if len(sys.argv) != 2:  # cmd line basic check
     print(f"Expected 2 arguments, got {len(sys.argv)}")
-size_choice = [sys.argv[1]]
+size_choice = sys.argv[1]
 
 # main steps of the toolkit
 timers = TimerMemoryCollection(silent=False)
@@ -30,83 +31,85 @@ timers = TimerMemoryCollection(silent=False)
 
 # Note: Loading is much slower from $SCRATCH disk
 
-with timers('Load data (h5ad/rds)'):
-    data = sc.read_h5ad(f'{data_dir}/SEAAD_raw_{size}.h5ad')
+with timers("Load data (h5ad/rds)"):
+    data = sc.read_h5ad(f"{data_dir}/SEAAD_raw_{size_choice}.h5ad")
 
-# Note: QC filters are matched across libraries for timing, then 
-# standardized by filtering to single_cell.py QC cells, not timed 
+# Note: QC filters are matched across libraries for timing, then
+# standardized by filtering to single_cell.py QC cells, not timed
 
-with timers('Quality control'):
-    data.var['mt'] = data.var_names.str.startswith('MT-')
-    sc.pp.calculate_qc_metrics(
-        data, qc_vars=['mt'], inplace=True, log1p=True)
+with timers("Quality control"):
+    data.var["mt"] = data.var_names.str.startswith("MT-")
+    sc.pp.calculate_qc_metrics(data, qc_vars=["mt"], inplace=True, log1p=True)
     sc.pp.filter_cells(data, min_genes=100, copy=False)
     sc.pp.filter_genes(data, min_cells=3, copy=True)
 
-print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
+print(f"cells: {data.shape[0]}, genes: {data.shape[1]}")
 
-with timers('Doublet detection'):
-    sc.pp.scrublet(data, batch_key='sample')
+with timers("Doublet detection"):
+    sc.pp.scrublet(data, batch_key="sample")
 
-data = data[data.obs['tmp_passed_QC']]
-print(f'cells: {data.shape[0]}, genes: {data.shape[1]}')
+data = data[data.obs["tmp_passed_QC"]]
+print(f"cells: {data.shape[0]}, genes: {data.shape[1]}")
 
-with timers('Normalization'):
+with timers("Normalization"):
     sc.pp.normalize_total(data)
     sc.pp.log1p(data)
 
-with timers('Feature selection'):
-    sc.pp.highly_variable_genes(data, n_top_genes=2000, batch_key='sample')
+with timers("Feature selection"):
+    sc.pp.highly_variable_genes(data, n_top_genes=2000, batch_key="sample")
 
-with timers('PCA'):
+with timers("PCA"):
     sc.tl.pca(data)
 
-with timers('Neighbor graph'):
+with timers("Neighbor graph"):
     sc.pp.neighbors(data)
 
-with timers('Embedding'):
+with timers("Embedding"):
     sc.tl.umap(data)
 
-#TODO: The number of clusters needs to match across libraries
+# TODO: The number of clusters needs to match across libraries
 
-with timers('Clustering (3 resolutions)'):
+with timers("Clustering (3 resolutions)"):
     for res in [0.5, 1, 2]:
         sc.tl.leiden(
-            data, flavor='igraph', key_added=f'leiden_res_{res:4.2f}',
-            resolution=res)
+            data, flavor="igraph", key_added=f"leiden_res_{res:4.2f}", resolution=res
+        )
 
 print(f"leiden_res_0.50: {len(data.obs['leiden_res_0.50'].unique())}")
 print(f"leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}")
 print(f"leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}")
 
-with timers('Plot embeddings'):
-    sc.pl.umap(data, color=['leiden_res_1.00'])
-    plt.savefig(f'{work_dir}/figures/scanpy_embedding_cluster_{size}.png',
-                dpi=300, bbox_inches='tight', pad_inches='layout')
-    
-with timers('Find markers'):
-    sc.tl.rank_genes_groups(
-        data, groupby='leiden_res_1.00', method='wilcoxon')
+with timers("Plot embeddings"):
+    sc.pl.umap(data, color=["leiden_res_1.00"])
+    plt.savefig(
+        f"{work_dir}/figures/scanpy_embedding_cluster_{size_choice}.png",
+        dpi=300,
+        bbox_inches="tight",
+        pad_inches="layout",
+    )
+
+with timers("Find markers"):
+    sc.tl.rank_genes_groups(data, groupby="leiden_res_1.00", method="wilcoxon")
 
 timers.print_summary(sort=False)
-timers_df = timers\
-    .to_dataframe(sort=False, unit='s')\
-    .with_columns(pl.lit('test_basic_scanpy').alias('test'),
-                pl.lit(size).alias('size'))
+timers_df = timers.to_dataframe(sort=False, unit="s").with_columns(
+    pl.lit("test_basic_scanpy").alias("test"), pl.lit(size_choice).alias("size")
+)
 # increments the output csv file to ensure old outputs do not get overwritten
 print(timers_df)
-partial_output = f'{work_dir}/output/test_basic_scanpy_{size}'
+partial_output = f"{work_dir}/output/test_basic_scanpy_{size_choice}"
 i = 1
 output = f"{partial_output}_{i}.csv"
 while os.path.exists(output):
     i += 1
     output = f"{partial_output}_{i}.csv"
-    
+
 timers_df.write_csv(output)
 
-del timers, timers_df, data; gc.collect()
+del timers, timers_df, data
+gc.collect()
 
-'''
+"""
 --- System Information ---
 Node: nia0036.scinet.local
 CPU: 40 physical cores, 80 logical cores
@@ -141,4 +144,4 @@ Plot embeddings took 4s 944ms (0.1%)
 Find markers took 1h 11m (53.0%)
 
 Total time: 2h 14m
-'''
+"""

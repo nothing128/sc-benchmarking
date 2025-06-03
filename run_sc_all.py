@@ -1,4 +1,4 @@
-from utils import run_slurm
+from utils import run_slurm  # type: ignore
 import itertools
 import sys
 
@@ -9,17 +9,19 @@ params = itertools.product(
     size_options, num_threads_options, subset_options
 )
 
+
 def print_usage():
     print(f"Usage: python {sys.argv[0]} [1-2] ...")
     print("If argv[1]==1, queues an instance for every option combination for sc")
     print("If argv[1]==2, queues argv[2] instances for every pipeline using the 400K dataset (except base seurat)")
 
+
 if __name__ == "__main__":
     # queues slurm jobs based on argument
-    if sys.argv[1]=="1": 
+    if sys.argv[1] == "1":
         for size, num_threads, subset in params:
             run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
-    elif sys.argv[1]=="2" and len(sys.argv)==3:
+    elif sys.argv[1] == "2" and len(sys.argv) == 3:
         sizes = ['400K']
         params_list = list(itertools.product(
             sizes, num_threads_options, subset_options
