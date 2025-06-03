@@ -17,9 +17,11 @@ system_info()
 args = commandArgs(trailingOnly=TRUE)
 if (length(args)!=2) {
   str<-paste0("Expected 2 arguments, found ", length(args))
+  print(str)
   quit()
 } else if (!(args[1] %in% size_options)) {
   str<-paste0("argument must be one of ", size_options)
+  print(str)
   quit()
 }
 for (size in c(args[1])) {  
