@@ -163,16 +163,16 @@ for (size in c(args)) {
   timers_df$size = size
 
   print(timers_df)
-  partial_output1 = paste0(work_dir, "/output/test_seurat_bpcells_", size)
+  partial_output = paste0(work_dir, "/output/test_seurat_bpcells_", size)
     i = 1
-    partial_output2 = paste0(partial_output1,"_",i)
+    output = paste0(partial_output,"_",i,".csv")
     while (file.exists(partial_output2)) {
       i <- i + 1
-      partial_output2 = paste0(partial_output1,"_",i)
+      output = paste0(partial_output,"_",i,".csv")
     }
         
   write.csv(timers_df, 
-    paste0(partial_output2, ".csv"), 
+    output, 
     row.names = FALSE)
   unlink(dir_path, recursive=TRUE)
 }

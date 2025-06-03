@@ -162,14 +162,14 @@ all_timers.append(df)
 del data, timers, df; gc.collect()
 
 timers_df = pl.concat(all_timers)
-partial_output1 = f'{work_dir}/output/test_basic_sc_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}'
+partial_output = f'{work_dir}/output/test_basic_sc_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}'
 i = 1
-partial_output2 = f"{partial_output1}_{i}"
-while os.path.exists(partial_output2):
+output = f"{partial_output}_{i}.csv"
+while os.path.exists(output):
     i += 1
-    partial_output2 = f"{partial_output1}_{i}"
+    output = f"{partial_output}_{i}.csv"
     
-timers_df.write_csv(f'{partial_output2}.csv')
+timers_df.write_csv(output)
 
 '''
 --- System Information ---

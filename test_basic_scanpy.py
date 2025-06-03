@@ -93,14 +93,14 @@ for size in size_choice:
                     pl.lit(size).alias('size'))
 
     print(timers_df)
-    partial_output1 = f'{work_dir}/output/test_basic_scanpy_{size}'
+    partial_output = f'{work_dir}/output/test_basic_scanpy_{size}'
     i = 1
-    partial_output2 = f"{partial_output1}_{i}"
-    while os.path.exists(partial_output2):
+    output = f"{partial_output}_{i}.csv"
+    while os.path.exists(output):
         i += 1
-        partial_output2 = f"{partial_output1}_{i}"
+        output = f"{partial_output}_{i}.csv"
         
-    timers_df.write_csv(f'{partial_output2}.csv')
+    timers_df.write_csv(output)
 
     del timers, timers_df, data; gc.collect()
 
