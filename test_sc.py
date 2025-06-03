@@ -28,7 +28,7 @@ size_options = ['20K', '400K', '1M']
 
 
 system_info()
-
+# takes in cmd line args to run one instance of the toolkit
 if len(sys.argv) != 4:
     print(f"Usage: python {sys.argv[0]} [num_threads_options] [subset_options] [size_options]")
     print("num_threads_options must be -1 or 1")
@@ -45,7 +45,7 @@ size = sys.argv[3]
 if ("-h" in sys.argv) or \
     (num_threads not in num_threads_options) or \
     (sys.argv[2] not in subset_options) or\
-    (size not in size_options):
+    (size not in size_options): 
     print(f"Usage: python {sys.argv[0]} [num_threads_options] [subset_options] [size_options]")
     print("num_threads_options must be -1 or 1")
     print("subset_options must be True or False")     
@@ -57,7 +57,7 @@ if ("-h" in sys.argv) or \
 timers = TimerMemoryCollection(silent=True)
 
 # Note: Loading is much slower from $scratch disk
-
+# main toolkit steps
 with timers('Load data (h5ad/rds)'):
     data = SingleCell(
         f'{data_dir}/SEAAD_raw_{size}.h5ad',
@@ -149,7 +149,7 @@ with timers('Find markers'):
 print('--- Params ---')
 print(f'{size=}, {num_threads=}, {subset=}')
 timers.print_summary(sort=False)
-
+# store result to polars dataframe
 df = timers\
     .to_dataframe(sort=False, unit='s')\
     .with_columns(
@@ -160,7 +160,7 @@ df = timers\
 
 all_timers.append(df)
 del data, timers, df; gc.collect()
-
+# increments the output csv file to ensure old outputs do not get overwritten
 timers_df = pl.concat(all_timers)
 partial_output = f'{work_dir}/output/test_basic_sc_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}'
 i = 1

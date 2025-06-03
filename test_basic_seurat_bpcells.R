@@ -161,7 +161,7 @@ for (size in c(args)) {
   timers_df = timers$to_dataframe(unit = "s", sort = FALSE)
   timers_df$test = 'test_seurat_bpcells'
   timers_df$size = size
-
+  # increments the output csv file to ensure old outputs do not get overwritten
   print(timers_df)
   partial_output = paste0(work_dir, "/output/test_seurat_bpcells_", size)
     i = 1

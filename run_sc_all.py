@@ -15,7 +15,8 @@ def print_usage():
     print("If argv[1]==2, queues argv[2] instances for every pipeline using the 400K dataset (except base seurat)")
 
 if __name__ == "__main__":
-    if sys.argv[1]=="1":
+    # queues slurm jobs based on argument
+    if sys.argv[1]=="1": 
         for size, num_threads, subset in params:
             run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
     elif sys.argv[1]=="2" and len(sys.argv)==3:
