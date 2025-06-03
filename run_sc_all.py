@@ -15,15 +15,15 @@ def print_usage():
     print("If argv[1]==2, queues argv[2] instances for every pipeline using the 400K dataset (except base seurat)")
 
 if __name__ == "__main__":
-    if sys.argv[1]==1:
+    if sys.argv[1]=="1":
         for size, num_threads, subset in params:
             run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
-    elif sys.argv[1]==2 and len(sys.argv)==3:
+    elif sys.argv[1]=="2" and len(sys.argv)==3:
         sizes = ['400K']
         params = itertools.product(
             sizes, num_threads_options, subset_options
         )
-        for i in range(sys.argv[2]):
+        for i in range(int(sys.argv[2])):
             for size, num_threads, subset in params:
                 run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
             run_slurm(f"Rscript test_basic_seurat_bpcells.R {sizes[0]}")
