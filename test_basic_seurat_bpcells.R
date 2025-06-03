@@ -15,6 +15,7 @@ source(file.path("utils_local.R"))
 size_options <- c("20K","400K","1M")
 system_info()
 args = commandArgs(trailingOnly=TRUE)
+print(args[0])
 if (length(args)!=1) {
   str<-paste0("Expected 1 argument, found ", length(args))
   print(str)
