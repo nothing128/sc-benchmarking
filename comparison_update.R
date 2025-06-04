@@ -38,19 +38,23 @@ results <- bind_rows( # Use bind_rows() here
 results <- subset(results, select = -c(aborted))
 
 
-
+# for scanpy, seurat (they do not have these options)
 results <- results %>% mutate(
   thread_str = coalesce(as.character(num_threads), "single_thread"),
   subset_str = coalesce(as.character(subset), "subset"),
 )
+# transform thread,subset options to be more descriptive
 results$thread_str[results$thread_str == '1'] <- 'single_thread'
 results$thread_str[results$thread_str == '-1'] <- 'multi_thread'
 results$subset_str[results$subset_str == 'false'] <- 'no_subset'
 results$subset_str[results$subset_str == 'true'] <- 'subset'
+# combine all options for plotting
 results$fill_group = paste(results$test, results$thread_str, results$subset_str, sep = "_")
+# renaming steps to save space
 results$operation[results$operation == 'Load data (h5ad/rds)'] <- 'Load data'
 results$operation[results$operation == 'Clustering (3 resolutions)'] <- 'Clustering (3 res.)'
 
+# set order
 results <- results %>% 
   mutate(
     operation = 
@@ -68,6 +72,7 @@ results <- results %>%
                   "Plot embeddings",
                   "Find markers")))
 
+# temporary plot to decide where to add breaks
 p <- ggplot(results, aes(x = duration, y = operation, fill = fill_group)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_y_discrete(limits = rev(levels(results$operation))) +
@@ -82,6 +87,7 @@ p <- ggplot(results, aes(x = duration, y = operation, fill = fill_group)) +
 
 ggsave("figures/comparison.png", plot = p, width = 10, height = 8)
 
+# define colors for plot
 my_colors <- c("test_basic_sc_multi_thread_subset" = "#aec6e7",   
                "test_basic_sc_multi_thread_no_subset" = '#1f78b4',
                "test_basic_scanpy_single_thread_subset" = "#bcbd23", 
@@ -92,6 +98,8 @@ my_colors <- c("test_basic_sc_multi_thread_subset" = "#aec6e7",
                
                ) 
 
+# runtime plots
+# split by dataset size
 p_1 <- results %>% 
   filter(size == "20K") %>%
   ggplot(aes(x = duration, y = operation, fill = fill_group)) +
@@ -147,6 +155,7 @@ p_3 <- results %>%
 combined_plot <- aplot::plot_list(p_1, p_2, p_3, ncol = 1)
 ggsave("figures/comparison.png", plot = combined_plot, width = 10, height = 12)
 
+# temporary plot
 p <- ggplot(results, aes(x = memory, y = operation, fill = fill_group)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_y_discrete(limits = rev(levels(results$operation))) +
@@ -161,7 +170,8 @@ p <- ggplot(results, aes(x = memory, y = operation, fill = fill_group)) +
 
 ggsave("figures/memory_comparison.png", plot = p, width = 10, height = 8)
 
-
+# split by dataset size
+# memory comparison plot
 p_1 <- results %>% 
   filter(size == "20K") %>%
   ggplot(aes(x = memory, y = operation, fill = fill_group)) +

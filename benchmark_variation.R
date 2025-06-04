@@ -8,6 +8,7 @@ suppressPackageStartupMessages({
 
 work_dir <- 'output2'
 
+# combine the outputs of relevant csv files
 results <- bind_rows( # Use bind_rows() here
   lapply(
     list.files(path = work_dir, pattern = "test_", full.names = TRUE),
@@ -38,19 +39,23 @@ results <- bind_rows( # Use bind_rows() here
 results <- subset(results, select = -c(aborted))
 
 
-
+# for scanpy, seurat (they do not have these options)
 results <- results %>% mutate(
   thread_str = coalesce(as.character(num_threads), "single_thread"),
   subset_str = coalesce(as.character(subset), "subset"),
 )
+# transform thread,subset options to be more descriptive
 results$thread_str[results$thread_str == '1'] <- 'single_thread'
 results$thread_str[results$thread_str == '-1'] <- 'multi_thread'
 results$subset_str[results$subset_str == 'false'] <- 'no_subset'
 results$subset_str[results$subset_str == 'true'] <- 'subset'
+# combine all options for plotting
 results$fill_group = paste(results$test, results$thread_str, results$subset_str, sep = "_")
+# renaming steps to save space
 results$operation[results$operation == 'Load data (h5ad/rds)'] <- 'Load data'
 results$operation[results$operation == 'Clustering (3 resolutions)'] <- 'Clustering (3 res.)'
 
+# set order
 results <- results %>% 
   mutate(
     operation = 
@@ -68,6 +73,7 @@ results <- results %>%
                    "Plot embeddings",
                    "Find markers")))
 
+# define colors for plot
 my_colors <- c("test_basic_sc_multi_thread_subset" = "#aec6e7",   
                "test_basic_sc_multi_thread_no_subset" = '#1f78b4',
                "test_basic_scanpy_single_thread_subset" = "#bcbd23", 
@@ -78,6 +84,8 @@ my_colors <- c("test_basic_sc_multi_thread_subset" = "#aec6e7",
                
 )
 
+# toolkit takes way less runtime compared to scanpy/bpcells
+# splitting prevents toolkit data from being too bundled up
 p_1 <- results %>% 
   filter((test != "test_basic_scanpy") & (test != "test_seurat_bpcells")) %>%
   ggplot(aes(x = duration, y = operation, color = fill_group))+
@@ -101,7 +109,7 @@ p_1 <- results %>%
   ) +
   theme_classic() +
   theme(legend.position = "right")
-
+# scanpy/bpcells plot
 p_2 <- results %>% 
   filter((test == "test_basic_scanpy") | (test == "test_seurat_bpcells")) %>%
   ggplot(aes(x = duration, y = operation, color = fill_group))+
@@ -128,7 +136,7 @@ p_2 <- results %>%
 combined_plot <- aplot::plot_list(p_1, p_2, ncol = 1)
 ggsave("figures/runtime_variation.png", plot = combined_plot, width = 10, height = 6)
 
-
+# split toolkit with scanpy/seurat for consistency with runtime split
 p_1_mem <- results %>% 
   filter((test != "test_basic_scanpy") & (test != "test_seurat_bpcells")) %>%
   ggplot(aes(x = memory, y = operation, color = fill_group))+
