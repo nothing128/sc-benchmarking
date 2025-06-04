@@ -27,7 +27,7 @@ if __name__ == "__main__":
             sizes, num_threads_options, subset_options
         ))
         for i in range(int(sys.argv[2])):
-            for size, num_threads, subset in params:
+            for size, num_threads, subset in params_list:
                 run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
             run_slurm(f"Rscript test_basic_seurat_bpcells.R {sizes[0]}")
             run_slurm(f"python test_basic_scanpy.py {sizes[0]}")
