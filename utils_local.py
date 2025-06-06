@@ -1,96 +1,20 @@
 # Paste pre-Pyrfected Python
 import gc
-import gzip
 import io
 import os
 import socket
 import subprocess
 import time
+import numpy as np
+import polars as pl  
+import psutil
 from contextlib import contextmanager
 from timeit import default_timer
 
-import h5py  # type: ignore
-import numpy as np
-import polars as pl  # type: ignore
-import psutil
-from scipy import sparse
-from scipy.io import mmwrite
-
 delay = 0.1
 
-
-def write_to_mtx(adata, output_dir):
-    os.makedirs(output_dir, exist_ok=True)
-    with gzip.open(f"{output_dir}/matrix.mtx.gz", "wb", compresslevel=4) as f:
-        mmwrite(f, adata.X.T)
-    with gzip.open(f"{output_dir}/barcodes.tsv.gz", "wb", compresslevel=4) as f:
-        pl.DataFrame({"barcodes": list(adata.obs_names)}).write_csv(
-            f, separator="\t", include_header=False
-        )
-    with gzip.open(f"{output_dir}/features.tsv.gz", "wb", compresslevel=4) as f:
-        pl.DataFrame({"features": list(adata.var_names)}).write_csv(
-            f, separator="\t", include_header=False
-        )
-
-
-def write_to_h5(adata, file):
-    if not sparse.isspmatrix_csr(adata.X):
-        adata.X = sparse.csr_matrix(adata.X)
-    if "feature_types" not in adata.var.columns:
-        adata.var["feature_types"] = ["Gene Expression"] * adata.n_vars
-    if "genome" not in adata.var.columns:
-        adata.var["genome"] = ["unknown"] * adata.n_vars
-    if "gene_ids" not in adata.var.columns:
-        adata.var["gene_ids"] = adata.var.index.values.copy()
-
-    def int_max(x):
-        return int(max(np.floor(len(str(int(max(x)))) / 4), 1) * 4)
-
-    def str_max(x):
-        return max([len(i) for i in x])
-
-    w = h5py.File(file, "w")
-    grp = w.create_group("matrix")
-    grp.create_dataset(
-        "data", data=np.array(adata.X.data, dtype=f"<i{int_max(adata.X.data)}")
-    )
-    grp.create_dataset(
-        "indices", data=np.array(adata.X.indices, dtype=f"<i{int_max(adata.X.indices)}")
-    )
-    grp.create_dataset(
-        "indptr", data=np.array(adata.X.indptr, dtype=f"<i{int_max(adata.X.indptr)}")
-    )
-    grp.create_dataset(
-        "shape",
-        data=np.array(
-            [adata.n_vars, adata.n_obs],
-            dtype=f"<i{int_max([adata.n_vars, adata.n_obs])}",
-        ),
-    )
-    grp.create_dataset(
-        "barcodes",
-        data=np.array(adata.obs_names, dtype=f"|S{str_max(adata.obs_names)}"),
-    )
-    ftrs = grp.create_group("features")
-    ftrs.create_dataset(
-        "feature_type",
-        data=np.array(
-            adata.var.feature_types, dtype=f"|S{str_max(adata.var.feature_types)}"
-        ),
-    )
-    ftrs.create_dataset(
-        "genome",
-        data=np.array(adata.var.genome, dtype=f"|S{str_max(adata.var.genome)}"),
-    )
-    ftrs.create_dataset(
-        "id",
-        data=np.array(adata.var.gene_ids, dtype=f"|S{str_max(adata.var.gene_ids)}"),
-    )
-    ftrs.create_dataset(
-        "name", data=np.array(adata.var.index, dtype=f"|S{str_max(adata.var.index)}")
-    )
-    w.close()
-
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_MONITOR_MEM_SH_PATH = os.path.join(_SCRIPT_DIR, "monitor_mem.sh")
 
 class TimerMemoryCollection:
     def __init__(self, silent=True):
@@ -107,7 +31,7 @@ class TimerMemoryCollection:
             if not self.silent:
                 print(f"{message}...")
             curr_process = subprocess.Popen(
-                ["./monitor_mem.sh", "-p", str(pid)],
+                [_MONITOR_MEM_SH_PATH, "-p", str(pid)],
                 shell=False,
                 stdout=subprocess.PIPE,
                 text=True,

@@ -1,36 +1,26 @@
 from utils import run_slurm  # type: ignore
 import itertools
-import sys
 
-num_threads_options = [-1, 1]
-subset_options = ["True", "False"]
 size_options = ['20K', '400K', '1M']
-params = itertools.product(
-    size_options, num_threads_options, subset_options
-)
+pipelines = {
+    'sc-python': 'python test_basic_sc.py {threads} {subset} {size}',
+    'scanpy': 'python test_basic_scanpy.py {size}',
+    'seurat': 'Rscript test_basic_seurat.R {size}',
+    'seurat-bpcells': 'Rscript test_basic_seurat_bpcells.R {size}',
+}
 
-
-def print_usage():
-    print(f"Usage: python {sys.argv[0]} [1-2] ...")
-    print("If argv[1]==1, queues an instance for every option combination for sc")
-    print("If argv[1]==2, queues argv[2] instances for every pipeline using the 400K dataset (except base seurat)")
-
-
-if __name__ == "__main__":
-    # queues slurm jobs based on argument
-    if sys.argv[1] == "1":
-        for size, num_threads, subset in params:
-            run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
-    elif sys.argv[1] == "2" and len(sys.argv) == 3:
-        sizes = ['400K']
-        params_list = list(itertools.product(
-            sizes, num_threads_options, subset_options
-        ))
-        for i in range(int(sys.argv[2])):
-            for size, num_threads, subset in params_list:
-                run_slurm(f"python test_sc.py {num_threads} {subset} {size}")
-            run_slurm(f"Rscript test_basic_seurat_bpcells.R {sizes[0]}")
-            run_slurm(f"python test_basic_scanpy.py {sizes[0]}")
-    else:
-        print_usage()
-        exit(1)
+if __name__ == '__main__':
+    for size in size_options:
+        for name, command in pipelines.items():
+            if name == 'sc-python':
+                thread_opts = [-1, 1]
+                subset_opts = ['True', 'False']
+                params = itertools.product(thread_opts, subset_opts)
+                for threads, subset in params:
+                    cmd = command.format(
+                        threads=threads, subset=subset, size=size
+                    )
+                    run_slurm(cmd)
+            else:
+                cmd = command.format(size=size)
+                run_slurm(cmd)

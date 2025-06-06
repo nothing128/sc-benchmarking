@@ -1,24 +1,21 @@
-# Paste pre-Pyrfected Python
 import gc
-import os
 import sys
-from utils_local import TimerMemoryCollection, system_info
-import matplotlib.pyplot as plt  # type: ignore
 import polars as pl  # type: ignore
 import scanpy as sc  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 
 work_dir = "projects/sc-benchmarking"
 data_dir = "single-cell/SEAAD/subsampled"
-sys.path.append(work_dir)
 
+sys.path.append(work_dir)
+from utils_local import TimerMemoryCollection, system_info
+
+size_options = ["20K", "400K", "1M"]
+size_choice = sys.argv[1]
+assert len(sys.argv) == 2
+assert size_choice in size_options
 
 system_info()
-size_options = ["20K", "400K", "1M"]
-if len(sys.argv) != 2:  # cmd line basic check
-    print(f"Expected 2 arguments, got {len(sys.argv)}")
-size_choice = sys.argv[1]
-
-# main steps of the toolkit
 timers = TimerMemoryCollection(silent=False)
 
 # with timers('Load data (10X mtx)'):
@@ -34,22 +31,14 @@ timers = TimerMemoryCollection(silent=False)
 with timers("Load data (h5ad/rds)"):
     data = sc.read_h5ad(f"{data_dir}/SEAAD_raw_{size_choice}.h5ad")
 
-# Note: QC filters are matched across libraries for timing, then
-# standardized by filtering to single_cell.py QC cells, not timed
-
 with timers("Quality control"):
     data.var["mt"] = data.var_names.str.startswith("MT-")
     sc.pp.calculate_qc_metrics(data, qc_vars=["mt"], inplace=True, log1p=True)
     sc.pp.filter_cells(data, min_genes=100, copy=False)
     sc.pp.filter_genes(data, min_cells=3, copy=True)
 
-print(f"cells: {data.shape[0]}, genes: {data.shape[1]}")
-
 with timers("Doublet detection"):
     sc.pp.scrublet(data, batch_key="sample")
-
-data = data[data.obs["tmp_passed_QC"]]
-print(f"cells: {data.shape[0]}, genes: {data.shape[1]}")
 
 with timers("Normalization"):
     sc.pp.normalize_total(data)
@@ -97,51 +86,9 @@ timers_df = timers.to_dataframe(sort=False, unit="s").with_columns(
 )
 # increments the output csv file to ensure old outputs do not get overwritten
 print(timers_df)
-partial_output = f"{work_dir}/output/test_basic_scanpy_{size_choice}"
-i = 1
-output = f"{partial_output}_{i}.csv"
-while os.path.exists(output):
-    i += 1
-    output = f"{partial_output}_{i}.csv"
-
+output = f"{work_dir}/output/test_basic_scanpy_{size_choice}.csv"
 timers_df.write_csv(output)
 
 del timers, timers_df, data
 gc.collect()
 
-"""
---- System Information ---
-Node: nia0036.scinet.local
-CPU: 40 physical cores, 80 logical cores
-Memory: 170.6 GB available / 188.6 GB total
-
---- Timing Summary 20K ---
-Load data (h5ad/rds) took 703ms 479µs (0.4%)
-Quality control took 5s 288ms (2.7%)
-Doublet detection took 1m 22s (42.0%)
-Normalization took 653ms 406µs (0.3%)
-Feature selection took 2s 879ms (1.5%)
-PCA took 2s 435ms (1.2%)
-Neighor graph took 29s 321ms (15.0%)
-Embedding took 18s 275ms (9.4%)
-Clustering (3 resoltions) took 1s 139ms (0.6%)
-Plot embeddings took 1s 536ms (0.8%)
-Find markers took 51s 102ms (26.2%)
-
-Total time: 3m 15s
-
---- Timing Summary 400K ---
-Load data (h5ad/rds) took 9s 807ms (0.1%)
-Quality control took 1m 2s (0.8%)
-Doublet detection took 50m 27s (37.5%)
-Normalization took 13s 34ms (0.2%)
-Feature selection took 35s 798ms (0.4%)
-PCA took 44s 335ms (0.5%)
-Neighor graph took 56s 655ms (0.7%)
-Embedding took 8m 10s (6.1%)
-Clustering (3 resoltions) took 45s 215ms (0.6%)
-Plot embeddings took 4s 944ms (0.1%)
-Find markers took 1h 11m (53.0%)
-
-Total time: 2h 14m
-"""

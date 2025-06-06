@@ -39,13 +39,6 @@ def parse_log(log_file: str, out: str):
                         curr_line=f.readline()
                     curr_line=f.readline()
 
-                    
-                    
-                    
-                
-                
-
-
 if __name__ == "__main__":
     if len(sys.argv)!=3:
         print("Usage: parse_log.py <log_file> <output file>")

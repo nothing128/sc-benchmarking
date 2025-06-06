@@ -15,43 +15,35 @@ source(file.path("utils_local.R"))
 size_options <- c("20K","400K","1M")
 system_info()
 args = commandArgs(trailingOnly=TRUE)
-print(args)
-if (length(args)!=1) {
-  str<-paste0("Expected 1 argument, found ", length(args))
-  print(str)
-  quit()
-} else if (!(args %in% size_options)) {
-  str<-paste0("argument must be one of ", size_options)
-  print(str)
-  quit()
-}
-for (size in c(args)) {  
-  timers = TimerCollection(silent = FALSE)
+stopifnot(length(args) == 1, args[1] %in% size_options)
+size <- args[1]
 
-  # timers$with_timer("Load data (10X mtx)", {
-  #   data <- Read10X(
-  #       data.dir = paste0(data_dir, "/SEAAD_raw_", size),
-  #       gene.column=1)
-  #   data <- CreateSeuratObject(counts = data)
-  # })
-  # rm(data); invisible(gc())
+timers = TimerCollection(silent = FALSE)
 
-  # timers$with_timer("Load data (h5)", {
-  #   data = Read10X_h5(
-  #       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
-  #   data <- CreateSeuratObject(counts = data)
-  # })
-  # rm(data); invisible(gc())
+# timers$with_timer("Load data (10X mtx)", {
+#   data <- Read10X(
+#       data.dir = paste0(data_dir, "/SEAAD_raw_", size),
+#       gene.column=1)
+#   data <- CreateSeuratObject(counts = data)
+# })
+# rm(data); invisible(gc())
 
-  # timers$with_timer("Load data (h5Seurat)", {
-  #   data <- LoadH5Seurat(
-  #     data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
-  # })
-  # rm(data); invisible(gc())
+# timers$with_timer("Load data (h5)", {
+#   data = Read10X_h5(
+#       filename = paste0(data_dir, "/SEAAD_raw_", size, ".h5"))
+#   data <- CreateSeuratObject(counts = data)
+# })
+# rm(data); invisible(gc())
 
-  # Note: Loading is much slower from $SCRATCH disk
+# timers$with_timer("Load data (h5Seurat)", {
+#   data <- LoadH5Seurat(
+#     data.dir = paste0(data_dir, "/SEAAD_raw_", size, ".h5Seurat"))
+# })
+# rm(data); invisible(gc())
 
-  timers$with_timer("Load data (h5ad/rds)", {
+# Note: Loading is much slower from $SCRATCH disk
+
+timers$with_timer("Load data (h5ad/rds)", {
     mat_raw <- open_matrix_10x_hdf5(
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5")
     )
@@ -161,21 +153,10 @@ for (size in c(args)) {
   timers_df = timers$to_dataframe(unit = "s", sort = FALSE)
   timers_df$test = 'test_seurat_bpcells'
   timers_df$size = size
-  # increments the output csv file to ensure old outputs do not get overwritten
   print(timers_df)
-  partial_output = paste0(work_dir, "/output/test_seurat_bpcells_", size)
-    i = 1
-    output = paste0(partial_output,"_",i,".csv")
-    while (file.exists(output)) {
-      i <- i + 1
-      output = paste0(partial_output,"_",i,".csv")
-    }
-        
-  write.csv(timers_df, 
-    output, 
-    row.names = FALSE)
+  output = paste0(work_dir, "/output/test_seurat_bpcells_", size, ".csv")
+  write.csv(timers_df, output, row.names = FALSE)
   unlink(dir_path, recursive=TRUE)
-}
 
 print("
 --- Timing Summary 20K ---

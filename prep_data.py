@@ -120,24 +120,3 @@ for n, label in sizes.items():
         sc_sub.save(f'{path}/SEAAD_raw_{label}.h5Seurat', overwrite=True)
 
     del sc_sub; gc.collect()
-
-
-# sc = SingleCell(
-#     'projects/rrg-wainberg/single-cell/Green/'
-#     'p400_qced_shareable.h5ad')
-# sc.X.sort_indices()
-# sc = sc\
-#     .rename_obs({
-#         '_index': 'cell_id', 'projid': 'sample',
-#         'state': 'subclass'})\
-#     .with_columns_obs(
-#         pl.col('subset').cast(pl.String).replace({
-#             'CUX2+': 'Excitatory'})
-#             .alias('class'))\
-#     .select_obs(
-#         ['sample', 'class', 'subclass'])\
-#     .rename_var({'_index': 'gene_symbol'})\
-#     .filter_obs(
-#         pl.col('sample').is_not_null() & 
-#         pl.col('class').is_not_null() &
-#         pl.col('subclass').is_not_null())

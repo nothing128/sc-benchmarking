@@ -5,49 +5,13 @@ suppressPackageStartupMessages({
   library(processx)
 })
 
-# ConvertEnsembleToSymbol <- function(
-#     mat,
-#     species = c('human', 'mouse')
-# ) {
-#   species <- match.arg(arg = species)
-#   if (species == 'human') {
-#     database <- 'hsapiens_gene_ensembl'
-#     symbol <- 'hgnc_symbol'
-
-#   } else if (species == 'mouse') {
-#     database <- 'mmusculus_gene_ensembl'
-#     symbol <- 'mgi_symbol'
-
-#   } else {
-#     stop('species name not found')
-#   }
-
-#   library("biomaRt")
-#   library("dplyr")
-
-#   name_df <- data.frame(gene_id = c(rownames(mat)))
-#   name_df$orig.id <- name_df$gene_id
-#   #make this a character, otherwise it will throw errors with left_join
-#   name_df$gene_id <- as.character(name_df$gene_id)
-#   # in case it's gencode, this mostly works
-#   #if ensembl, will leave it alone
-#   name_df$gene_id <- sub("[.][0-9]*","",name_df$gene_id)
-#   mart <- useDataset(dataset = database, useMart("ensembl"))
-#   genes <-  name_df$gene_id
-#   gene_IDs <- getBM(filters= "ensembl_gene_id",
-#                     attributes= c("ensembl_gene_id", symbol),
-#                     values = genes,
-#                     mart= mart)
-#   gene.df <- left_join(name_df, gene_IDs, by = c("gene_id"="ensembl_gene_id"))
-#   rownames(gene.df) <- make.unique(gene.df$orig.id)
-#   gene.df <- gene.df[rownames(mat),]
-#   gene.df <-gene.df[gene.df[,symbol] != '',]
-#   gene.df <- gene.df[ !is.na(gene.df$orig.id),]
-#   mat.filter <- mat[gene.df$orig.id,]
-#   rownames(mat.filter) <- make.unique(gene.df[,symbol])
-#   return(mat.filter)
-# }
-
+.this_file_path <- NULL
+try({.this_file_path <- dirname(sys.frame(1)$ofile)}, silent = TRUE)
+if (is.null(.this_file_path)) .this_file_path <- "."
+.MONITOR_MEM_SH_PATH <- normalizePath(
+  file.path(.this_file_path, "monitor_mem.sh"),
+  mustWork = FALSE
+)
 
 TimerCollection = function(silent = TRUE) {
   env = environment()
@@ -64,7 +28,7 @@ TimerCollection = function(silent = TRUE) {
     result = NULL
     aborted = FALSE
     curr_process <- process$new(
-        command = "./monitor_mem.sh",
+        command = .MONITOR_MEM_SH_PATH,
         args = c("-p", as.character(pid)),
         stdout = "|"
       )
@@ -82,7 +46,8 @@ TimerCollection = function(silent = TRUE) {
       processx::run("kill", args = c(as.character(process_pid)))
       stdout_output <- curr_process$read_all_output()
       con <- textConnection(stdout_output)
-      df <- read.csv(con, header = FALSE, sep = ",", strip.white = TRUE, col.names = c("Integer", "Percentage"))
+      df <- read.csv(con, header = FALSE, sep = ",", strip.white = TRUE, 
+        col.names = c("Integer", "Percentage"))
       close(con)
       peak_mem <- max(df$Integer, na.rm = TRUE)
 
@@ -274,3 +239,47 @@ system_info = function() {
   cat(sprintf('CPU: %s physical cores, %s logical cores\n', cp, cl))
   cat(sprintf('Memory: %.1f GB available / %.1f GB total\n', am, tm))
 }
+
+
+# ConvertEnsembleToSymbol <- function(
+#     mat,
+#     species = c('human', 'mouse')
+# ) {
+#   species <- match.arg(arg = species)
+#   if (species == 'human') {
+#     database <- 'hsapiens_gene_ensembl'
+#     symbol <- 'hgnc_symbol'
+
+#   } else if (species == 'mouse') {
+#     database <- 'mmusculus_gene_ensembl'
+#     symbol <- 'mgi_symbol'
+
+#   } else {
+#     stop('species name not found')
+#   }
+
+#   library("biomaRt")
+#   library("dplyr")
+
+#   name_df <- data.frame(gene_id = c(rownames(mat)))
+#   name_df$orig.id <- name_df$gene_id
+#   #make this a character, otherwise it will throw errors with left_join
+#   name_df$gene_id <- as.character(name_df$gene_id)
+#   # in case it's gencode, this mostly works
+#   #if ensembl, will leave it alone
+#   name_df$gene_id <- sub("[.][0-9]*","",name_df$gene_id)
+#   mart <- useDataset(dataset = database, useMart("ensembl"))
+#   genes <-  name_df$gene_id
+#   gene_IDs <- getBM(filters= "ensembl_gene_id",
+#                     attributes= c("ensembl_gene_id", symbol),
+#                     values = genes,
+#                     mart= mart)
+#   gene.df <- left_join(name_df, gene_IDs, by = c("gene_id"="ensembl_gene_id"))
+#   rownames(gene.df) <- make.unique(gene.df$orig.id)
+#   gene.df <- gene.df[rownames(mat),]
+#   gene.df <-gene.df[gene.df[,symbol] != '',]
+#   gene.df <- gene.df[ !is.na(gene.df$orig.id),]
+#   mat.filter <- mat[gene.df$orig.id,]
+#   rownames(mat.filter) <- make.unique(gene.df[,symbol])
+#   return(mat.filter)
+# }

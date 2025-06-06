@@ -6,13 +6,17 @@ suppressPackageStartupMessages({
 })
 options(Seurat.object.assay.version = "v5")
 
-work_dir = "projects/rrg-wainberg/karbabi/sc-benchmarking"
+work_dir = "projects/sc-benchmarking"
 data_dir = "single-cell/SEAAD"
+
 source(file.path(work_dir, "utils_local.R"))
 
 system_info()
 
-size = "400K"
+size_options <- c("20K","400K","1M")
+args = commandArgs(trailingOnly=TRUE)
+stopifnot(length(args) == 1, args[1] %in% size_options)
+size <- args[1]
 
 timers = TimerCollection(silent = FALSE)
 
