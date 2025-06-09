@@ -68,13 +68,10 @@ timers$with_timer("PCA", {
   data_query <- RunPCA(data_query)
 })
 
-timers$with_timer("Align datasets", {
+timers$with_timer("Transfer labels", {
   anchors <- FindTransferAnchors(
     reference = data_ref, query = data_query, dims = 1:30,
     reference.reduction = "pca")
-})
-
-timers$with_timer("Transfer labels", {
   predictions <- TransferData(
     anchorset = anchors, refdata = data_ref$subclass)
   data_query <- AddMetaData(
