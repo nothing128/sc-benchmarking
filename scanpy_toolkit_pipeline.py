@@ -56,47 +56,35 @@ timers = TimerMemoryCollection(silent=True)
 
 # Note: Loading is much slower from $scratch disk
 # main toolkit steps
-with timers("Load data (h5ad/rds)"):
-    data = SingleCell(f"{data_dir}/SEAAD_raw_{size}.h5ad", num_threads=1)
+with timers('Load data'):
+    data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.h5ad', num_threads=1)
     data = data.set_num_threads(num_threads)
-print(f"X num_threads: {data.X._num_threads}")
 
-# Note: QC filters are matched across libraries for timing, then
-# standardized by filtering to single_cell.py qc cells
-with timers("Quality control"):
-    data.qc(
+with timers('Quality control'):
+    data = data.qc(
         subset=subset,
-        max_mito_fraction=0.05,
-        min_genes=100,
-        nonzero_MALAT1=False,
         remove_doublets=False,
         allow_float=True,
-        verbose=False,
-        num_threads=num_threads,
-    )
-# Not timed
-if subset:
-    data = data.filter_obs(pl.col("tmp_passed_QC")).with_uns(QCed=True)
-else:
-    data = data.rename_obs({"tmp_passed_QC": "passed_QC"}).with_uns(QCed=True)
-with timers("Doublet detection"):
-    data = data.find_doublets(batch_column="sample", num_threads=num_threads)
-print(f"cells: {data.shape[0]}, genes: {data.shape[1]}")
+        verbose=False)
 
-with timers("Feature selection"):
-    data = data.hvg(num_threads=num_threads)
+with timers('Doublet detection'):
+    data = data.find_doublets(batch_column='sample')
+        
+# Not timed 
+data = data.filter_obs(pl.col('doublet').not_())
 
-with timers("Normalization"):
-    data = data.normalize(num_threads=num_threads)
+with timers('Feature selection'):
+    data = data.hvg()
 
-with timers("PCA"):
-    data = data.PCA(num_threads=num_threads)
+with timers('Normalization'):
+    data = data.normalize()
 
-
+with timers('PCA'):
+    data = data.PCA()
 
 # Not timed
 if not subset:
-    data = data.filter_obs(pl.col("passed_QC"))
+    data = data.filter_obs(pl.col('passed_QC'))
     
 # convert to scanpy/anndata
 data = data.to_scanpy()
