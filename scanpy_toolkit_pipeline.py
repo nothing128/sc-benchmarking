@@ -119,12 +119,12 @@ data = SingleCell(data)
 
 with timers("Plot embeddings"):
     data.plot_embedding(
-        "cluster_0", f"{work_dir}/figures/sc_embedding_cluster_{size}.png"
+        "leiden_res_0.50", f"{work_dir}/figures/sc_embedding_cluster_{size}.png"
     )
 
 # Not timed
 with timers("Find markers"):
-    markers = data.find_markers("cluster_0", num_threads=num_threads)
+    markers = data.find_markers("leiden_res_0.50", num_threads=num_threads)
 
 # with timers('Save data'):
 #    data.save(
