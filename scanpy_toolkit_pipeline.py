@@ -87,7 +87,7 @@ if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
     
 # convert to scanpy/anndata
-data = data.to_scanpy('passed_QC')
+data = data.to_scanpy(QC_column='passed_QC')
 with timers('Neighbor graph'):
     sc.pp.neighbors(data)
 
