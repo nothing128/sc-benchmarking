@@ -88,7 +88,7 @@ data_for_pca = data.copy()
 with timers('PCA'):
     data_for_pca.PCA() 
 
-pca_result_matrix = data_for_pca._X 
+pca_result_matrix = data_for_pca._X.toarray() 
 
 data._obsm['X_pca'] = pca_result_matrix
 
