@@ -80,14 +80,17 @@ with timers('Normalization'):
     data = data.normalize()
 
 if not subset:
-    print("Filtering cells that did not pass QC...")
+    print("Filtering cells...")
     data = data.filter_obs(pl.col('passed_QC'))
 
+data_for_pca = data.copy()
 
 with timers('PCA'):
-    pca_result = data.PCA() 
+    data_for_pca.PCA() 
 
-data._obsm['X_pca'] = pca_result
+pca_result_matrix = data_for_pca._X 
+
+data._obsm['X_pca'] = pca_result_matrix
 
 data = data.to_scanpy()
 
