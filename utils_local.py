@@ -1,4 +1,3 @@
-# Paste pre-Pyrfected Python
 import gc
 import io
 import os
@@ -27,7 +26,6 @@ class TimerMemoryCollection:
 
         @contextmanager
         def timer():
-
             if not self.silent:
                 print(f"{message}...")
             curr_process = subprocess.Popen(
@@ -77,7 +75,9 @@ class TimerMemoryCollection:
         print("\n--- Timing Summary ---")
         if sort:
             timings_items = sorted(
-                self.timings.items(), key=lambda x: x[1]["duration"], reverse=True
+                self.timings.items(), 
+                key=lambda x: x[1]["duration"], 
+                reverse=True
             )
         else:
             timings_items = list(self.timings.items())
@@ -90,7 +90,8 @@ class TimerMemoryCollection:
             status = "aborted after" if info["aborted"] else "took"
             time_str = self._format_time(duration, unit)
             print(
-                f'{message} {status} {time_str} ({percentage:.1f}%) using {memory} GiB ({info["%mem"]}%)'
+                f'{message} {status} {time_str} ({percentage:.1f}%) using {memory} GiB '
+                f'({info["%mem"]}%)'
             )
         print(f"\nTotal time: {self._format_time(total_time, unit)}")
 
@@ -158,7 +159,11 @@ class TimerMemoryCollection:
         total = sum(info["duration"] for info in self.timings.values())
 
         items = (
-            sorted(self.timings.items(), key=lambda x: x[1]["duration"], reverse=True)
+            sorted(
+                self.timings.items(), 
+                key=lambda x: x[1]["duration"], 
+                reverse=True
+            )
             if sort
             else list(self.timings.items())
         )
@@ -227,10 +232,7 @@ def system_info():
 
     print("\n--- System Information ---")
     print(f"Node: {hostname}")
-    print(
-        f"CPU: {cpu_count_physical} physical cores, {cpu_count_logical} "
-        f"logical cores"
-    )
-    print(
-        f"Memory: {available_mem_gb:.1f} GB available / {total_mem_gb:.1f} " f"GB total"
-    )
+    print(f"CPU: {cpu_count_physical} physical cores, "
+          f"{cpu_count_logical} logical cores")
+    print(f"Memory: {available_mem_gb:.1f} GB available / "
+          f"{total_mem_gb:.1f} GB total")

@@ -4,19 +4,21 @@ import polars as pl  # type: ignore
 from single_cell import SingleCell  # type: ignore
 
 work_dir = 'projects/sc-benchmarking'
-data_dir = 'single-cell/SEAAD/subsampled'
+data_dir = 'single-cell/SEAAD'
 
 sys.path.append(work_dir)
 from utils_local import TimerMemoryCollection, system_info
 
 num_threads = int(sys.argv[1])
-subset = bool(sys.argv[2])
-size = str(sys.argv[3])
+subset = sys.argv[2].lower() == 'true'
+size = sys.argv[3]
+output = sys.argv[4]
+
 print('--- Params ---')
 print(f'{size=}, {num_threads=}, {subset=}')
 
 system_info()
-timers = TimerMemoryCollection(silent=False)
+timers = TimerMemoryCollection(silent=True)
 
 # Note: Loading is much slower from $SCRATCH disk
 # TODO: Temporarily setting `num_threads=1` for loading until shared 
@@ -31,50 +33,49 @@ with timers('Quality control'):
         subset=subset,
         remove_doublets=False,
         allow_float=True,
-        verbose=False,
-        num_threads=num_threads)
+        verbose=False)
 
 with timers('Doublet detection'):
-    data = data.find_doublets(batch_column='sample', num_threads=num_threads)
+    data = data.find_doublets(batch_column='sample')
         
 # Not timed 
 data = data.filter_obs(pl.col('doublet').not_())
 
 with timers('Feature selection'):
-    data = data.hvg(num_threads=num_threads)
+    data = data.hvg()
 
 with timers('Normalization'):
-    data = data.normalize(num_threads=num_threads)
+    data = data.normalize()
 
 with timers('PCA'):
-    data = data.PCA(num_threads=num_threads)
+    data = data.PCA()
 
 # Not timed
 if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
 
 with timers('Neighbor graph'):
-    data = data.neighbors(num_threads=num_threads)  
-    data = data.shared_neighbors(num_threads=num_threads)  
+    data = data.neighbors()  
+    data = data.shared_neighbors()  
 
 # TODO: The number of clusters needs to match across libraries
 
 with timers('Clustering (3 resolutions)'):
-    data = data.cluster(resolution=[1, 0.5, 2], num_threads=num_threads)
+    data = data.cluster(resolution=[1, 0.5, 2])
 
 print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
 
 with timers('Embedding'):
-    data = data.embed(num_threads=num_threads)
+    data = data.embed()
 
 with timers('Plot embeddings'):
     data.plot_embedding(
         'cluster_0', f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
 
 with timers('Find markers'):
-    markers = data.find_markers('cluster_0', num_threads=num_threads)
+    markers = data.find_markers('cluster_0')
 
 timers.print_summary(sort=False)
 
@@ -84,11 +85,8 @@ df = timers.to_dataframe(sort=False, unit='s').with_columns(
     pl.lit(num_threads).alias('num_threads'),
     pl.lit(subset).alias('subset'),
 )
+df.write_csv(output)
 
-all_timers.append(df)
 del data, timers, df
 gc.collect()
-# increments the output csv file to ensure old outputs do not get overwritten
-timers_df = pl.concat(all_timers)
-output = f'{work_dir}/output/test_basic_sc_{size}_{('single_thread' if num_threads == 1  else 'multi_thread')}{('_subset' if subset  else '_no_subset')}.csv'
-timers_df.write_csv(output)
+
