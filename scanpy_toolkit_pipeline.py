@@ -78,17 +78,17 @@ with timers('Feature selection'):
 
 with timers('Normalization'):
     data = data.normalize()
-if not subset:
-    data = data.filter_obs(pl.col('passed_QC'))
-data = data.to_scanpy(QC_column='passed_QC')
+
 with timers('PCA'):
-    sc.tl.pca(data)
+    data = data.PCA()
 
 # Not timed
-
+if not subset:
+    data = data.filter_obs(pl.col('passed_QC'))
     
 # convert to scanpy/anndata
-
+data = data.to_scanpy()
+data = data.T
 with timers('Neighbor graph'):
     sc.pp.neighbors(data)
 
