@@ -87,24 +87,26 @@ if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
     
 # convert to scanpy/anndata
-data = data.to_scanpy(QC_column=None)
-with timers("Neighbor graph"):
+data = data.to_scanpy('passed_QC')
+with timers('Neighbor graph'):
     sc.pp.neighbors(data)
 
-with timers("Embedding"):
+with timers('Embedding'):
     sc.tl.umap(data)
 
 # TODO: The number of clusters needs to match across libraries
 
-with timers("Clustering (3 resolutions)"):
+with timers('Clustering (3 resolutions)'):
     for res in [0.5, 1, 2]:
         sc.tl.leiden(
-            data, flavor="igraph", key_added=f"leiden_res_{res:4.2f}", resolution=res
-        )
+            data, 
+            flavor='igraph',
+            key_added=f'leiden_res_{res:4.2f}', 
+            resolution=res)
 
-print(f"leiden_res_0.50: {len(data.obs['leiden_res_0.50'].unique())}")
-print(f"leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}")
-print(f"leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}")
+print(f'leiden_res_0.50: {len(data.obs['leiden_res_0.50'].unique())}')
+print(f'leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}')
+print(f'leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}')
 
 #convert to toolkit
 data = SingleCell(data)
