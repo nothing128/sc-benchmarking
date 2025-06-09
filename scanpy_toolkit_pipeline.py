@@ -92,31 +92,31 @@ pca_result_matrix = data_for_pca._X.toarray()
 
 data._obsm['X_pca'] = pca_result_matrix
 
-data = data.to_scanpy()
-
+anndata = data.to_scanpy()
+del data
 with timers('Neighbor graph'):
-    sc.pp.neighbors(data)
+    sc.pp.neighbors(anndata)
 
 with timers('Embedding'):
-    sc.tl.umap(data)
+    sc.tl.umap(anndata)
 
 # TODO: The number of clusters needs to match across libraries
 
 with timers('Clustering (3 resolutions)'):
     for res in [0.5, 1, 2]:
         sc.tl.leiden(
-            data, 
+            anndata, 
             flavor='igraph',
             key_added=f'leiden_res_{res:4.2f}', 
             resolution=res)
 
-print(f'leiden_res_0.50: {len(data.obs['leiden_res_0.50'].unique())}')
-print(f'leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}')
-print(f'leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}')
+print(f'leiden_res_0.50: {len(anndata.obs['leiden_res_0.50'].unique())}')
+print(f'leiden_res_1.00: {len(anndata.obs['leiden_res_1.00'].unique())}')
+print(f'leiden_res_2.00: {len(anndata.obs['leiden_res_2.00'].unique())}')
 
 #convert to toolkit
-data = SingleCell(data)
-
+data = SingleCell(anndata)
+del anndata
 with timers("Plot embeddings"):
     data.plot_embedding(
         "leiden_res_0.50", f"{work_dir}/figures/sc_embedding_cluster_{size}.png",
