@@ -8,7 +8,7 @@ from utils_local import TimerMemoryCollection, system_info
 import scanpy as sc  # type: ignore
 
 work_dir = 'projects/sc-benchmarking'
-data_dir = 'single-cell/SEAAD'
+data_dir = '~/single-cell/SEAAD'
 
 os.makedirs(f"{work_dir}/output", exist_ok=True)
 os.makedirs(f"{work_dir}/figures", exist_ok=True)
