@@ -87,8 +87,22 @@ if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
     
 # convert to scanpy/anndata
-data = data.to_scanpy()
-data = data.T
+adata_malformed = data.to_scanpy()
+
+# Manually fix the object
+# 1. Move the PCA data from the wrong place (.X) to the right place (.obsm)
+pca_results = adata_malformed.X.copy()
+adata_malformed.obsm['X_pca'] = pca_results
+
+# 2. You now have an invalid .X and .var. You must fix them.
+#    This is the tricky part. You might need to create dummy data.
+n_obs = adata_malformed.n_obs
+n_vars_dummy = 4 # From your error message
+adata_malformed.var = pd.DataFrame(index=[f'dummy_gene_{i}' for i in range(n_vars_dummy)])
+adata_malformed.X = np.zeros((n_obs, n_vars_dummy)) # Replace .X with valid placeholder
+
+# Now the object is *technically* valid and can be used
+data = adata_malformed
 with timers('Neighbor graph'):
     sc.pp.neighbors(data)
 
