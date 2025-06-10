@@ -84,41 +84,72 @@ if not subset:
     print("Filtering cells...")
     data = data.filter_obs(pl.col('passed_QC'))
 
+print("Step 1: Running PCA and setting keys...")
 data_for_pca = data.copy()
-
 with timers('PCA'):
-    data_for_pca.PCA() 
+    data_with_pcs = data_for_pca.PCA()
+pca_result_matrix = data_with_pcs.obsm['PCs']
 
-pca_result_matrix = data_for_pca._X.toarray() 
+# THE NEW FIX: Ensure PCA matrix is float32, a common requirement for C++/Rust code
+if pca_result_matrix.dtype != np.float32:
+    print(f" -> Converting PCA matrix from {pca_result_matrix.dtype} to float32.")
+    pca_result_matrix = pca_result_matrix.astype(np.float32)
 
-data._obsm['X_pca'] = pca_result_matrix
+# Store under both names to satisfy both toolkits
+data.obsm['PCs'] = pca_result_matrix
+data.obsm['X_pca'] = pca_result_matrix
+del data_for_pca, data_with_pcs
 
 anndata = data.to_scanpy()
 del data
+
+# --- 2. Run Scanpy Neighbors ---
+print("\nStep 2: Running Scanpy's neighbor finding...")
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
+# --- 3. The "Paranoid" Data Transformation ---
+print("\nStep 3: Manually creating and sorting all neighbor graph components...")
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
 neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
+distance_array = np.zeros((n_obs, 15), dtype=np.float32)
 
 for i in range(n_obs):
-    all_found_neighbors = dist_matrix[i].indices
-    neighbor_array[i, :] = all_found_neighbors[:15]
+    raw_distances = dist_matrix[i].data[:15]
+    raw_neighbors = dist_matrix[i].indices[:15]
+
+    # Sort by distance and apply the same sorting to neighbors
+    sorting_indices = np.argsort(raw_distances)
+    sorted_distances = raw_distances[sorting_indices]
+    sorted_neighbors = raw_neighbors[sorting_indices]
+
+    distance_array[i, :] = sorted_distances
+    neighbor_array[i, :] = sorted_neighbors
+
 anndata.obsm['neighbors'] = neighbor_array
+anndata.obsm['distances'] = distance_array
+print(f" -> VERIFY: obsm['neighbors'] shape={anndata.obsm['neighbors'].shape}, dtype={anndata.obsm['neighbors'].dtype}")
+print(f" -> VERIFY: obsm['distances'] shape={anndata.obsm['distances'].shape}, dtype={anndata.obsm['distances'].dtype}")
 
+# --- 4. Workaround the Constructor ---
+print("\nStep 4: Working around the SingleCell constructor...")
+connectivities_graph = anndata.obsp['connectivities']
+del anndata.obsp # Clean the object for conversion
+
+# --- 5. Convert and Restore ---
 data = SingleCell(anndata)
+data.obsp['connectivities'] = connectivities_graph
 
+# --- 6. Run Clustering (this part works) ---
+print("\nStep 6: Running clustering...")
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
         resolution=[1, 0.5, 2],
         shared_neighbors_key='connectivities'
     )
 
-print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
-print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
-print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
-data.obsm['distances']=data.obsp['distances']
+print(" -> Clustering successful.")
 with timers('Embedding'):
     data = data.embed(PC_key='X_pca')
 
