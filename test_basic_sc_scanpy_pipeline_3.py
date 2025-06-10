@@ -111,7 +111,10 @@ print(f" -> Created obsm['neighbors'] with shape {anndata.obsm['neighbors'].shap
 data = SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
-    data = data.cluster(resolution=[1, 0.5, 2])
+    data = data.cluster(
+        resolution=[1, 0.5, 2],
+        shared_neighbors_key='connectivities'
+    )
 
 print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
