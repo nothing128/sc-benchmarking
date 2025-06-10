@@ -150,6 +150,13 @@ with timers('Clustering (3 resolutions)'):
     )
 
 print(" -> Clustering successful.")
+print("\n--- LIBRARY VERSIONS ---")
+print(f"Python: {sys.version}")
+print(f"Scanpy: {sc.__version__}")
+print(f"NumPy: {np.__version__}")
+print(f"SciPy: {scipy.__version__}")
+print("--------------------------\n")
+
 with timers('Embedding'):
     data = data.embed(PC_key='X_pca')
 
