@@ -91,48 +91,52 @@ pca_result_matrix = data_with_pcs.obsm['PCs']
 
 data.obsm['PCs'] = pca_result_matrix
 data.obsm['X_pca'] = pca_result_matrix
-del data_for_pca, data_with_pcs # Free memory
+del data_for_pca, data_with_pcs
 
 anndata = data.to_scanpy()
-del data # Free up memory
+del data
 
 # --- 2. Run Scanpy Neighbors ---
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
-# --- 3. Prepare ALL required data structures for conversion back to SingleCell ---
-print("Preparing all required data structures for the custom toolkit...")
+# --- 3. Prepare ALL required data structures, NOW WITH SORTING ---
+print("Preparing all required data structures, with sorting, for the custom toolkit...")
 
-# a) Manually create obsm['neighbors'] (dense uint32 indices)
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
 neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
-for i in range(n_obs):
-    neighbor_array[i, :] = dist_matrix[i].indices[:15]
-anndata.obsm['neighbors'] = neighbor_array
-print(f" -> Created obsm['neighbors'] with shape {neighbor_array.shape} and dtype {neighbor_array.dtype}.")
-
-# b) --- THE FIX ---
-# Manually create obsm['distances'] (dense float32 values)
 distance_array = np.zeros((n_obs, 15), dtype=np.float32)
-for i in range(n_obs):
-    # .data contains the actual distance values for the non-zero elements in the row
-    distance_array[i, :] = dist_matrix[i].data[:15]
-anndata.obsm['distances'] = distance_array
-print(f" -> Created obsm['distances'] with shape {distance_array.shape} and dtype {distance_array.dtype}.")
 
+for i in range(n_obs):
+    # Get the raw, potentially unsorted data for cell i
+    raw_distances = dist_matrix[i].data[:15]
+    raw_neighbors = dist_matrix[i].indices[:15]
+
+    # --- THE CRITICAL FIX FOR THE SEGFAULT ---
+    # Get the indices that would sort the distances
+    sorting_indices = np.argsort(raw_distances)
+
+    # Apply this sorting to BOTH the distances and the neighbors
+    sorted_distances = raw_distances[sorting_indices]
+    sorted_neighbors = raw_neighbors[sorting_indices]
+    # ----------------------------------------
+
+    # Assign the sorted data to the final arrays
+    distance_array[i, :] = sorted_distances
+    neighbor_array[i, :] = sorted_neighbors
+
+anndata.obsm['neighbors'] = neighbor_array
+anndata.obsm['distances'] = distance_array
+print(" -> Created and SORTED obsm['neighbors'] and obsm['distances'].")
 
 # --- 4. Workaround the flawed constructor ---
-print("Working around the SingleCell constructor's data type restriction...")
 connectivities_graph = anndata.obsp['connectivities']
-# We no longer need the sparse distances matrix, so we can delete the whole obsp
 del anndata.obsp
-
 
 # --- 5. Convert and Restore ---
 data = SingleCell(anndata)
 data.obsp['connectivities'] = connectivities_graph
-
 
 # --- 6. Run the rest of the pipeline ---
 with timers('Clustering (3 resolutions)'):
@@ -146,7 +150,7 @@ print(f'cluster_1: {len(data.obs["cluster_1"].unique())}')
 print(f'cluster_2: {len(data.obs["cluster_2"].unique())}')
 
 with timers('Embedding'):
-    # This will now find obsm['PCs'] and obsm['distances'] and succeed.
+    # This call now receives data with all the correct properties, including sorting.
     data = data.embed()
 
 with timers('Plot embeddings'):
