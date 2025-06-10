@@ -85,73 +85,42 @@ if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
 
 data_for_pca = data.copy()
-with timers('PCA'):
-    data_with_pcs = data_for_pca.PCA()
-pca_result_matrix = data_with_pcs.obsm['PCs']
 
-data.obsm['PCs'] = pca_result_matrix
-data.obsm['X_pca'] = pca_result_matrix
-del data_for_pca, data_with_pcs
+with timers('PCA'):
+    data_for_pca.PCA() 
+
+pca_result_matrix = data_for_pca._X.toarray() 
+
+data._obsm['X_pca'] = pca_result_matrix
 
 anndata = data.to_scanpy()
 del data
-
-# --- 2. Run Scanpy Neighbors ---
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
-
-# --- 3. Prepare ALL required data structures, NOW WITH SORTING ---
-print("Preparing all required data structures, with sorting, for the custom toolkit...")
 
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
 neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
-distance_array = np.zeros((n_obs, 15), dtype=np.float32)
 
 for i in range(n_obs):
-    # Get the raw, potentially unsorted data for cell i
-    raw_distances = dist_matrix[i].data[:15]
-    raw_neighbors = dist_matrix[i].indices[:15]
-
-    # --- THE CRITICAL FIX FOR THE SEGFAULT ---
-    # Get the indices that would sort the distances
-    sorting_indices = np.argsort(raw_distances)
-
-    # Apply this sorting to BOTH the distances and the neighbors
-    sorted_distances = raw_distances[sorting_indices]
-    sorted_neighbors = raw_neighbors[sorting_indices]
-    # ----------------------------------------
-
-    # Assign the sorted data to the final arrays
-    distance_array[i, :] = sorted_distances
-    neighbor_array[i, :] = sorted_neighbors
-
+    all_found_neighbors = dist_matrix[i].indices
+    neighbor_array[i, :] = all_found_neighbors[:15]
 anndata.obsm['neighbors'] = neighbor_array
-anndata.obsm['distances'] = distance_array
-print(" -> Created and SORTED obsm['neighbors'] and obsm['distances'].")
 
-# --- 4. Workaround the flawed constructor ---
-connectivities_graph = anndata.obsp['connectivities']
-del anndata.obsp
-
-# --- 5. Convert and Restore ---
 data = SingleCell(anndata)
-data.obsp['connectivities'] = connectivities_graph
 
-# --- 6. Run the rest of the pipeline ---
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
         resolution=[1, 0.5, 2],
         shared_neighbors_key='connectivities'
     )
 
-print(f'cluster_0: {len(data.obs["cluster_0"].unique())}')
-print(f'cluster_1: {len(data.obs["cluster_1"].unique())}')
-print(f'cluster_2: {len(data.obs["cluster_2"].unique())}')
-
+print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
+print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
+print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
+data.obsm['distances']=data.obsp['distances']
 with timers('Embedding'):
-    # This call now receives data with all the correct properties, including sorting.
-    data = data.embed()
+    data = data.embed(PC_key='X_pca')
 
 with timers('Plot embeddings'):
     data.plot_embedding(
