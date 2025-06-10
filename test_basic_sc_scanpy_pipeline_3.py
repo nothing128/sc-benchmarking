@@ -85,30 +85,35 @@ if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
 
 data_for_pca = data.copy()
-
 with timers('PCA'):
-    data_for_pca.PCA() 
+    data_with_pcs = data_for_pca.PCA() # Let's assume default key 'PCs' is used
+pca_result_matrix = data_with_pcs.obsm['PCs']
 
-pca_result_matrix = data_for_pca._X.toarray() 
-
-data._obsm['X_pca'] = pca_result_matrix
+# Store the PCA result under BOTH names to satisfy both toolkits
+data.obsm['PCs'] = pca_result_matrix   # For your toolkit's defaults (e.g., embed)
+data.obsm['X_pca'] = pca_result_matrix # For Scanpy's defaults (e.g., neighbors)
+# -----------------------------
 
 anndata = data.to_scanpy()
-del data
+del data # Free up memory
+
+# --- Run Scanpy Neighbors ---
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
-print("Creating the obsm['neighbors'] array required by the cluster function...")
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
 neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
-
 for i in range(n_obs):
     all_found_neighbors = dist_matrix[i].indices
     neighbor_array[i, :] = all_found_neighbors[:15]
 anndata.obsm['neighbors'] = neighbor_array
 
+connectivities_graph = anndata.obsp['connectivities']
+del anndata.obsp
 data = SingleCell(anndata)
+data.obsp['connectivities'] = connectivities_graph
+
 
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
