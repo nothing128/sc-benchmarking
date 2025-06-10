@@ -101,7 +101,7 @@ with timers('Neighbor graph'):
 print("Creating the obsm['neighbors'] array required by the cluster function...")
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
-neighbor_array = np.zeros((n_obs, 15), dtype=int)
+neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
 
 for i in range(n_obs):
     all_found_neighbors = dist_matrix[i].indices
