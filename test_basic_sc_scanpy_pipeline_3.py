@@ -97,6 +97,7 @@ del data
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata)
 
+anndata.obsp['shared_neighbors'] = anndata.obsp['connectivities']
 data=SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
