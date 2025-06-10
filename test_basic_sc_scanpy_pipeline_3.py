@@ -125,7 +125,7 @@ print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
 with timers('Embedding'):
-    data = data.embed(PC_key='X_pca')
+    data = data.embed()
 
 with timers('Plot embeddings'):
     data.plot_embedding(
