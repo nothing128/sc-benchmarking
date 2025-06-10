@@ -98,16 +98,16 @@ del data
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
+print("Creating the obsm['neighbors'] array required by the cluster function...")
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
 neighbor_array = np.zeros((n_obs, 15), dtype=int)
 
 for i in range(n_obs):
     all_found_neighbors = dist_matrix[i].indices
-    other_neighbors = all_found_neighbors[all_found_neighbors != i]
-    neighbor_array[i, :] = other_neighbors
-
+    neighbor_array[i, :] = all_found_neighbors[:15]
 anndata.obsm['neighbors'] = neighbor_array
+print(f" -> Created obsm['neighbors'] with shape {anndata.obsm['neighbors'].shape}.")
 data = SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
