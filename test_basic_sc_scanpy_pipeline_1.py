@@ -87,11 +87,11 @@ data_for_pca = data.copy()
 
 with timers('PCA'):
     data_for_pca.PCA() 
-
+print("PCA done")
 pca_result_matrix = data_for_pca._X.toarray() 
 
 data._obsm['X_pca'] = pca_result_matrix
-
+print("scanpy convert")
 anndata = data.to_scanpy()
 del data
 with timers('Neighbor graph'):
