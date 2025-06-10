@@ -93,6 +93,7 @@ with timers('Neighbor graph'):
     data = data.neighbors()  
     data = data.shared_neighbors()  
 
+data.uns['neighbors']=data.obsm['neighbors']
 anndata = data.to_scanpy()
 
 with timers('Embedding'):
