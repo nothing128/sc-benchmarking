@@ -117,7 +117,7 @@ data = SingleCell(anndata)
 del anndata
 with timers("Plot embeddings"):
     data.plot_embedding(
-        "leiden_res_0.50", f"{work_dir}/figures/combined_sc_scanpy_embedding_cluster_{size}.png",
+        "subclass", f"{work_dir}/figures/combined_sc_scanpy_embedding_cluster_{size}.png",
         embedding_key='X_umap'
     )
 
