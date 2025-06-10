@@ -87,17 +87,13 @@ data_for_pca = data.copy()
 
 with timers('PCA'):
     data_for_pca.PCA() 
-print("PCA done")
 pca_result_matrix = data_for_pca._X.toarray() 
 
 data._obsm['X_pca'] = pca_result_matrix
-print("scanpy convert")
 anndata = data.to_scanpy()
-print("convert done")
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata)
 
-print("neighbor graph done")
 
 with timers('Embedding'):
     sc.tl.umap(anndata)
