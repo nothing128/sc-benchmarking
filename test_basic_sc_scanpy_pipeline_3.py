@@ -86,45 +86,67 @@ if not subset:
 
 data_for_pca = data.copy()
 with timers('PCA'):
-    data_with_pcs = data_for_pca.PCA() # Let's assume default key 'PCs' is used
+    data_with_pcs = data_for_pca.PCA()
 pca_result_matrix = data_with_pcs.obsm['PCs']
 
-# Store the PCA result under BOTH names to satisfy both toolkits
-data.obsm['PCs'] = pca_result_matrix   # For your toolkit's defaults (e.g., embed)
-data.obsm['X_pca'] = pca_result_matrix # For Scanpy's defaults (e.g., neighbors)
-# -----------------------------
+data.obsm['PCs'] = pca_result_matrix
+data.obsm['X_pca'] = pca_result_matrix
+del data_for_pca, data_with_pcs # Free memory
 
 anndata = data.to_scanpy()
 del data # Free up memory
 
-# --- Run Scanpy Neighbors ---
+# --- 2. Run Scanpy Neighbors ---
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
+# --- 3. Prepare ALL required data structures for conversion back to SingleCell ---
+print("Preparing all required data structures for the custom toolkit...")
+
+# a) Manually create obsm['neighbors'] (dense uint32 indices)
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
 neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
 for i in range(n_obs):
-    all_found_neighbors = dist_matrix[i].indices
-    neighbor_array[i, :] = all_found_neighbors[:15]
+    neighbor_array[i, :] = dist_matrix[i].indices[:15]
 anndata.obsm['neighbors'] = neighbor_array
+print(f" -> Created obsm['neighbors'] with shape {neighbor_array.shape} and dtype {neighbor_array.dtype}.")
 
+# b) --- THE FIX ---
+# Manually create obsm['distances'] (dense float32 values)
+distance_array = np.zeros((n_obs, 15), dtype=np.float32)
+for i in range(n_obs):
+    # .data contains the actual distance values for the non-zero elements in the row
+    distance_array[i, :] = dist_matrix[i].data[:15]
+anndata.obsm['distances'] = distance_array
+print(f" -> Created obsm['distances'] with shape {distance_array.shape} and dtype {distance_array.dtype}.")
+
+
+# --- 4. Workaround the flawed constructor ---
+print("Working around the SingleCell constructor's data type restriction...")
 connectivities_graph = anndata.obsp['connectivities']
+# We no longer need the sparse distances matrix, so we can delete the whole obsp
 del anndata.obsp
+
+
+# --- 5. Convert and Restore ---
 data = SingleCell(anndata)
 data.obsp['connectivities'] = connectivities_graph
 
 
+# --- 6. Run the rest of the pipeline ---
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
         resolution=[1, 0.5, 2],
         shared_neighbors_key='connectivities'
     )
 
-print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
-print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
-print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
+print(f'cluster_0: {len(data.obs["cluster_0"].unique())}')
+print(f'cluster_1: {len(data.obs["cluster_1"].unique())}')
+print(f'cluster_2: {len(data.obs["cluster_2"].unique())}')
+
 with timers('Embedding'):
+    # This will now find obsm['PCs'] and obsm['distances'] and succeed.
     data = data.embed()
 
 with timers('Plot embeddings'):
