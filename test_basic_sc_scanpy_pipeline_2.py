@@ -93,8 +93,23 @@ with timers('Neighbor graph'):
     data = data.neighbors()  
     data = data.shared_neighbors()  
 
-data.uns['neighbors']=data.obsm['neighbors']
 anndata = data.to_scanpy()
+
+print("Moving shared neighbor graph to obsp['connectivities']")
+anndata.obsp['connectivities'] = anndata.obsp['shared_neighbors']
+
+# 3. Manually create the metadata dictionary that UMAP was looking for.
+print("Manually creating uns['neighbors'] dictionary")
+anndata.uns['neighbors'] = {
+    'params': {
+        'n_neighbors': 20, # Use the value you passed to your function
+        'method': 'custom_sctk', # Acknowledge this wasn't Scanpy's method
+        'use_rep': 'PCs',
+        'metric': 'euclidean'
+    },
+    'connectivities_key': 'connectivities',
+    'distances_key': 'distances'
+}
 
 with timers('Embedding'):
     sc.tl.umap(anndata)
