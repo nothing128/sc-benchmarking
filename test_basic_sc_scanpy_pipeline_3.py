@@ -96,24 +96,19 @@ data._obsm['X_pca'] = pca_result_matrix
 anndata = data.to_scanpy()
 del data
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata)
+    sc.pp.neighbors(anndata, n_neighbors=15)
 
-anndata.obsp['shared_neighbors'] = anndata.obsp['connectivities']
 dist_matrix = anndata.obsp['distances']
 n_obs = anndata.n_obs
-
-# Pre-allocate a numpy array to hold the neighbor indices
 neighbor_array = np.zeros((n_obs, 15), dtype=int)
 
-# For each cell, find the column indices of its neighbors from the sparse matrix
 for i in range(n_obs):
-    # .indices gives the column indices of non-zero elements in that row
-    neighbors_for_cell_i = dist_matrix[i].indices
-    neighbor_array[i, :] = neighbors_for_cell_i
+    all_found_neighbors = dist_matrix[i].indices
+    other_neighbors = all_found_neighbors[all_found_neighbors != i]
+    neighbor_array[i, :] = other_neighbors
 
-# Add the newly created array to anndata.obsm under the required key
 anndata.obsm['neighbors'] = neighbor_array
-data=SingleCell(anndata)
+data = SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(resolution=[1, 0.5, 2])
