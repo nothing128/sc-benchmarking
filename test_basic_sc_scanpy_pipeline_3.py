@@ -107,7 +107,7 @@ for i in range(n_obs):
     all_found_neighbors = dist_matrix[i].indices
     neighbor_array[i, :] = all_found_neighbors[:15]
 anndata.obsm['neighbors'] = neighbor_array
-print(f" -> Created obsm['neighbors'] with shape {anndata.obsm['neighbors'].shape}.")
+
 data = SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
@@ -121,7 +121,7 @@ print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
 
 with timers('Embedding'):
-    data = data.embed()
+    data = data.embed(PC_key='X_pca')
 
 with timers('Plot embeddings'):
     data.plot_embedding(
