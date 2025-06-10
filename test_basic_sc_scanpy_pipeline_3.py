@@ -6,6 +6,7 @@ import polars as pl  # type: ignore
 from single_cell import SingleCell  # type: ignore
 from utils_local import TimerMemoryCollection, system_info
 import scanpy as sc  # type: ignore
+import numpy as np
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = '~/single-cell/SEAAD'
@@ -98,6 +99,20 @@ with timers('Neighbor graph'):
     sc.pp.neighbors(anndata)
 
 anndata.obsp['shared_neighbors'] = anndata.obsp['connectivities']
+dist_matrix = anndata.obsp['distances']
+n_obs = anndata.n_obs
+
+# Pre-allocate a numpy array to hold the neighbor indices
+neighbor_array = np.zeros((n_obs, 15), dtype=int)
+
+# For each cell, find the column indices of its neighbors from the sparse matrix
+for i in range(n_obs):
+    # .indices gives the column indices of non-zero elements in that row
+    neighbors_for_cell_i = dist_matrix[i].indices
+    neighbor_array[i, :] = neighbors_for_cell_i
+
+# Add the newly created array to anndata.obsm under the required key
+anndata.obsm['neighbors'] = neighbor_array
 data=SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
