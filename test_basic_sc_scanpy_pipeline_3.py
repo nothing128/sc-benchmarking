@@ -97,35 +97,24 @@ del data
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata)
 
-with timers('Embedding'):
-    sc.tl.umap(anndata)
-
-# TODO: The number of clusters needs to match across libraries
+data=SingleCell(anndata)
 
 with timers('Clustering (3 resolutions)'):
-    for res in [0.5, 1, 2]:
-        sc.tl.leiden(
-            anndata, 
-            flavor='igraph',
-            key_added=f'leiden_res_{res:4.2f}', 
-            resolution=res)
+    data = data.cluster(resolution=[1, 0.5, 2])
 
-print(f'leiden_res_0.50: {len(anndata.obs['leiden_res_0.50'].unique())}')
-print(f'leiden_res_1.00: {len(anndata.obs['leiden_res_1.00'].unique())}')
-print(f'leiden_res_2.00: {len(anndata.obs['leiden_res_2.00'].unique())}')
+print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
+print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
+print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
 
-#convert to toolkit
-data = SingleCell(anndata)
-del anndata
-with timers("Plot embeddings"):
+with timers('Embedding'):
+    data = data.embed()
+
+with timers('Plot embeddings'):
     data.plot_embedding(
-        "leiden_res_0.50", f"{work_dir}/figures/combined_sc_scanpy_embedding_cluster_{size}.png",
-        embedding_key='X_umap'
-    )
+        'cluster_0', f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
 
-# Not timed
-with timers("Find markers"):
-    markers = data.find_markers("leiden_res_0.50", num_threads=num_threads)
+with timers('Find markers'):
+    markers = data.find_markers('cluster_0')
 
 # with timers('Save data'):
 #    data.save(
@@ -151,35 +140,32 @@ del data, timers, df
 gc.collect()
 # increments the output csv file to ensure old outputs do not get overwritten
 timers_df = pl.concat(all_timers)
-output = f'{work_dir}/output/test_combined_sc_scanpy_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}.csv'
+output = f'{work_dir}/output/test_basic_sc_scanpy_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}.csv'
 timers_df.write_csv(output)
 
 """
 --- System Information ---
-Node: nl10603.narval.calcul.quebec
-CPU: 64 physical cores, 64 logical cores
-Memory: 1987.9 GB available / 2015.4 GB total
-
+Node: nia0028.scinet.local
+CPU: 40 physical cores, 80 logical cores
+Memory: 171.3 GB available / 188.6 GB total
+leiden_res_0.50: 11
+leiden_res_1.00: 14
+leiden_res_2.00: 20
 --- Params ---
-size='20K', num_threads=-1, subset=True, drop_X=True
+size='20K', num_threads=-1, subset=True
 
 --- Timing Summary ---
-Load data took 332ms 514µs (0.8%)
-Quality control took 57ms 488µs (0.1%)
-Doublet detection took 3s 837ms (8.7%)
-Feature selection took 188ms 536µs (0.4%)
-Normalization took 11ms 741µs (0.0%)
-PCA took 33s 491ms (75.9%)
-KNN took 929ms 249µs (2.1%)
-SNN took 85ms 344µs (0.2%)
-Neighbor graph took 1s 14ms (2.3%)
-Clustering (3 resolutions) took 121ms 646µs (0.3%)
-Embedding took 1s 112ms (2.5%)
-Plot embeddings took 2s 36ms (4.6%)
-Find markers took 75ms 189µs (0.2%)
-Save data took 810ms 135µs (1.8%)
-
-Total time: 44s 104ms
+Load data took 668ms 80µs (0.2%) using 1.53 GiB (0.8%)
+Quality control took 247ms 614µs (0.1%) using 1.67 GiB (0.9%)
+Doublet detection took 1s 241ms (0.4%) using 1.72 GiB (0.9%)
+Feature selection took 401ms 173µs (0.1%) using 1.38 GiB (0.7%)
+Normalization took 158ms 666µs (0.1%) using 1.45 GiB (0.8%)
+PCA took 603ms 33µs (0.2%) using 1.49 GiB (0.8%)
+Neighbor graph took 4m 14s (89.6%) using 16.71 GiB (8.9%)
+Embedding took 21s 951ms (7.7%) using 13.16 GiB (7.0%)
+Clustering (3 resolutions) took 1s 837ms (0.6%) using 13.21 GiB (7.0%)
+Plot embeddings took 2s 113ms (0.7%) using 13.16 GiB (7.0%)
+Find markers took 262ms 281µs (0.1%) using 13.16 GiB (7.0%)
 
 
 """
