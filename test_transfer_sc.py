@@ -4,7 +4,7 @@ import polars as pl  # type: ignore
 from single_cell import SingleCell  # type: ignore
 
 work_dir = 'projects/sc-benchmarking'
-data_dir = 'single-cell/SEAAD'
+data_dir = '~/single-cell/SEAAD'
 
 sys.path.append(work_dir)
 from utils_local import TimerMemoryCollection, system_info
