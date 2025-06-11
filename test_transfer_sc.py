@@ -50,7 +50,12 @@ with timers('PCA'):
     data_ref, data_query = data_ref.PCA(data_query)
 
 with timers('Transfer labels'):
-    data_ref, data_query = data_ref.harmonize(data_query)
+    data_ref, data_query = data_ref.harmonize(
+        data_query,
+        original=True,
+        num_threads=1,
+        early_stopping=True,
+        max_clustering_iterations=20)
     data_query = data_query.label_transfer_from(
         data_ref, 'subclass')
 
