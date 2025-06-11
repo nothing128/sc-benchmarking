@@ -99,7 +99,6 @@ data = data.cluster(
     shared_neighbors_key='connectivities'
 )
 
-data.obsm['distances']=data.obsp['distances']
 data = data.embed(PC_key='X_pca')
 print("embed done")
 data.plot_embedding(
