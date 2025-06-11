@@ -14,8 +14,8 @@ subset = sys.argv[2].lower() == "true"
 size = sys.argv[3]
 output = sys.argv[4]
 
-size_ref = {'1.2M': '600K', '400K': '200K', '20K': '10K'}
-
+# size_ref = {'1.2M': '600K', '400K': '200K', '20K': '10K'}
+size_ref = {'1M': '600K', '400K': '200K', '20K': '10K'}
 print('--- Params ---')
 print(f'{size=}, {num_threads=}, {subset=}')
 
