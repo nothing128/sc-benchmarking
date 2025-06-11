@@ -3,10 +3,11 @@ import sys
 import warnings
 import polars as pl  # type: ignore
 import scanpy as sc  # type: ignore
+import os
 warnings.filterwarnings('ignore')
 
 work_dir = 'projects/sc-benchmarking'
-data_dir = '../../single-cell/SEAAD'
+data_dir = os.path.expanduser('~/single-cell/SEAAD')
 
 sys.path.append(work_dir)
 from utils_local import TimerMemoryCollection, system_info
