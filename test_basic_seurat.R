@@ -5,8 +5,8 @@ suppressPackageStartupMessages({
 })  
 
 work_dir = "projects/sc-benchmarking"
-data_dir = "single-cell/SEAAD"
-source(file.path(work_dir, "utils_local.R"))
+data_dir = "~/single-cell/SEAAD"
+source(file.path("utils_local.R"))
 
 args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
