@@ -98,7 +98,7 @@ data = data.cluster(
     resolution=[1, 0.5, 2],
     shared_neighbors_key='connectivities'
 )
-
+print("embed starting")
 data = data.embed(PC_key='X_pca')
 print("embed done")
 data.plot_embedding(
