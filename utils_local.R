@@ -143,7 +143,7 @@ TimerCollection = function(silent = TRUE) {
       info = env$timings[[msg]]
       duration = info$duration
       percentage = if (total_time > 0) (duration / total_time) * 100 else 0
-      max_mem = info$max_mem/1024/1024
+      max_mem = info$max_mem
       mem_percent = info$mem_percent
 
 
