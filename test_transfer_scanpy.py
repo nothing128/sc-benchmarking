@@ -15,7 +15,7 @@ from utils_local import TimerMemoryCollection, system_info
 size = sys.argv[1]
 output = sys.argv[2]
 
-size_ref = {'1.2M': '600K', '400K': '200K', '20K': '10K'}
+size_ref = {'1M': '600K', '400K': '200K', '20K': '10K'}
 
 system_info()
 timers = TimerMemoryCollection(silent=True)
