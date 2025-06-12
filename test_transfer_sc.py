@@ -77,7 +77,10 @@ with pl.Config(tbl_rows=-1):
                 pl.when(pl.col("subclass") == "Total").then(1).otherwise(0),
                 pl.col("subclass"))
     print(accuracy_out)
-    accuracy_out.write_csv(f'{output}_accuracy.csv')
+    thread_mode = "single_thread" if num_threads == 1 else "multi_thread"
+    subset_mode = "subset" if subset else "no_subset"
+    output_file = f'{work_dir}/output/test_transfer_sc_{size}_{thread_mode}_{subset_mode}_accuracy.csv'
+    accuracy_out.write_csv(output_file)
 
 timers.print_summary(sort=False)
 
