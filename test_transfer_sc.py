@@ -61,7 +61,7 @@ with timers('Transfer labels'):
 
 with pl.Config(tbl_rows=-1):
     print('--- Transfer Accuracy ---')
-    print(data_query.obs\
+    accuracy_out = data_query.obs\
             .with_columns(
                 pl.col(["subclass", "cell_type"]).cast(pl.String))\
             .group_by('subclass')\
@@ -76,7 +76,8 @@ with pl.Config(tbl_rows=-1):
             .sort(
                 pl.when(pl.col("subclass") == "Total").then(1).otherwise(0),
                 pl.col("subclass"))
-    )
+    print(accuracy_out)
+    accuracy_out.write_csv(f'{output}_accuracy.csv')
 
 timers.print_summary(sort=False)
 
