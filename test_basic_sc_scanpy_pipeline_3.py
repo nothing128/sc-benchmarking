@@ -138,11 +138,12 @@ with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
 distance_matrix_sparse = anndata.obsp['distances']
-neighbor_indices = distance_matrix_sparse.indices.reshape(anndata.n_obs, 16).astype(np.int64)
+neighbor_indices = distance_matrix_sparse.indices.astype(np.int64)
+print(neighbor_indices, neighbor_indices.shape)
 remove_self_neighbors(neighbor_indices, num_threads)
 neighbor_indices = neighbor_indices[:, 1:]
 anndata.obsm['neighbors'] = neighbor_indices
-
+data=SingleCell(anndata)
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
         resolution=[1, 0.5, 2],
