@@ -135,13 +135,13 @@ with timers('PCA'):
 anndata = data.to_scanpy()
 
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata, n_neighbors=16)
+    sc.pp.neighbors(anndata, n_neighbors=15)
 
 distance_matrix_sparse = anndata.obsp['distances']
 neighbor_indices = distance_matrix_sparse.indices.reshape(anndata.n_obs, 16)
 remove_self_neighbors(neighbor_indices)
-nearest_neighbor_indices_no_self = neighbor_indices[:, 1:]
-anndata.obsm['neighbors'] = nearest_neighbor_indices_no_self
+neighbor_indices = neighbor_indices[:, 1:]
+anndata.obsm['neighbors'] = neighbor_indices
 
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
