@@ -130,12 +130,12 @@ if not subset:
 
 
 with timers('PCA'):
-    data_= data.PCA(PC_key='X_pca') 
-    
+    data = data.PCA(PC_key='X_pca') 
+
 anndata = data.to_scanpy()
-del data
+
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata, n_neighbors=15)
+    sc.pp.neighbors(anndata)
 
 dist_matrix = anndata.obsp['distances']
 remove_self_neighbors(dist_matrix, num_threads)
