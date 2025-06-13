@@ -137,7 +137,7 @@ anndata = data.to_scanpy()
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=16)
 
-dist_matrix = anndata.obsp['distances'].toarray()
+dist_matrix = anndata.obsp['distances'].toarray().astype(np.long)
 remove_self_neighbors(dist_matrix, num_threads)
 nearest_neighbor_indices = dist_matrix[:, 1:]
 anndata.obsm['neighbors'] = nearest_neighbor_indices
