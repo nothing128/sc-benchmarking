@@ -3,7 +3,7 @@ import gc
 import os
 import sys
 import polars as pl  # type: ignore
-from single_cell import SingleCell  # type: ignore
+from single_cell import SingleCell, cython_inline  # type: ignore
 from utils_local import TimerMemoryCollection, system_info
 import scanpy as sc  # type: ignore
 import numpy as np
@@ -19,6 +19,50 @@ sys.path.append(work_dir)
 num_threads_options = [-1, 1]
 subset_options = ["True", "False"]
 size_options = ["20K", "400K", "1M"]
+
+# Remove self-neighbors from each cell's list of nearest neighbors.
+# These are almost always in the 0th column, but occasionally later due
+# to the inaccuracy of the nearest-neighbor search. This leaves us with
+# `num_neighbors + num_extra_neighbors` nearest neighbors.
+remove_self_neighbors = cython_inline(r'''
+    from cython.parallel cimport prange
+
+    def remove_self_neighbors(long[:, ::1] neighbors,
+                              const unsigned num_threads):
+        cdef unsigned i, j, num_cells = neighbors.shape[0], \
+            num_neighbors = neighbors.shape[1]
+        
+        if num_threads == 1:
+            for i in range(num_cells):
+                # If the cell is its own nearest neighbor (almost always), skip
+                
+                if <unsigned> neighbors[i, 0] == i:
+                    continue
+                
+                # Find the position where the cell is listed as its own
+                # self-neighbor
+                
+                for j in range(1, num_neighbors):
+                    if <unsigned> neighbors[i, j] == i:
+                        break
+                
+                # Shift all neighbors before it to the right, overwriting it
+                
+                while j > 0:
+                    neighbors[i, j] = neighbors[i, j - 1]
+                    j = j - 1
+        else:
+            for i in prange(num_cells, nogil=True,
+                            num_threads=num_threads):
+                if <unsigned> neighbors[i, 0] == i:
+                    continue
+                for j in range(1, num_neighbors):
+                    if <unsigned> neighbors[i, j] == i:
+                        break
+                while j > 0:
+                    neighbors[i, j] = neighbors[i, j - 1]
+                    j = j - 1
+        ''')['remove_self_neighbors']
 
 
 system_info()
@@ -87,7 +131,7 @@ if not subset:
 data_for_pca = data.copy()
 
 with timers('PCA'):
-    data_for_pca.PCA() 
+    data_for_pca = data_for_pca.PCA() 
 
 pca_result_matrix = data_for_pca._X.toarray() 
 
@@ -99,13 +143,9 @@ with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, n_neighbors=15)
 
 dist_matrix = anndata.obsp['distances']
-n_obs = anndata.n_obs
-neighbor_array = np.zeros((n_obs, 15), dtype=np.uint32)
-
-for i in range(n_obs):
-    all_found_neighbors = dist_matrix[i].indices
-    neighbor_array[i, :] = all_found_neighbors[:15]
-anndata.obsm['neighbors'] = neighbor_array
+remove_self_neighbors(dist_matrix, num_threads)
+nearest_neighbor_indices = dist_matrix[:, 1:]
+anndata.obsm['neighbors'] = nearest_neighbor_indices
 
 data = SingleCell(anndata)
 

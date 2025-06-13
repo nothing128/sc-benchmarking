@@ -3,10 +3,9 @@ import gc
 import os
 import sys
 import polars as pl  # type: ignore
-from single_cell import SingleCell  # type: ignore
+from single_cell import SingleCell # type: ignore
 from utils_local import TimerMemoryCollection, system_info
 import scanpy as sc  # type: ignore
-
 work_dir = 'projects/sc-benchmarking'
 data_dir = '~/single-cell/SEAAD'
 

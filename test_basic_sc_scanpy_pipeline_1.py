@@ -83,14 +83,11 @@ if not subset:
     print("Filtering cells...")
     data = data.filter_obs(pl.col('passed_QC'))
 
-data_for_pca = data.copy()
-
 with timers('PCA'):
-    data_for_pca.PCA() 
-pca_result_matrix = data_for_pca._X.toarray() 
+    data = data.PCA() 
 
-data._obsm['X_pca'] = pca_result_matrix
 anndata = data.to_scanpy()
+
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata)
 
