@@ -84,7 +84,7 @@ if not subset:
     data = data.filter_obs(pl.col('passed_QC'))
 
 with timers('PCA'):
-    data = data.PCA() 
+    data = data.PCA(PC_key='X_pca') 
 
 anndata = data.to_scanpy()
 
