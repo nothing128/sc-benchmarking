@@ -140,7 +140,7 @@ with timers('Neighbor graph'):
 distance_matrix_sparse = anndata.obsp['distances']
 neighbor_indices = distance_matrix_sparse.indices.reshape(anndata.n_obs, 16)\
     .astype(np.int64)
-remove_self_neighbors(neighbor_indices, num_threads=1)
+remove_self_neighbors(neighbor_indices, num_threads)
 neighbor_indices = neighbor_indices[:, 1:]
 anndata.obsm['neighbors'] = neighbor_indices
 data=SingleCell(anndata)
