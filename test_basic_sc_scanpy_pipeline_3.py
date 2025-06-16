@@ -140,9 +140,9 @@ with timers('Neighbor graph'):
 distance_matrix_sparse = anndata.obsp['distances']
 neighbor_indices = distance_matrix_sparse.indices.reshape(anndata.n_obs, 16)\
     .astype(np.int64)
-remove_self_neighbors(neighbor_indices, num_threads)
+remove_self_neighbors(neighbor_indices, num_threads=1)
 neighbor_indices = neighbor_indices[:, 1:]
-anndata.obsm['neighbors'] = neighbor_indices
+anndata.obsm['neighbors'] = neighbor_indices.astype(np.uint32)
 data=SingleCell(anndata)
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
