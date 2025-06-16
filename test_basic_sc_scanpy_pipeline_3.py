@@ -136,9 +136,9 @@ anndata = data.to_scanpy()
 
 with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=15)
-
+obs=anndata.n_obs
 distance_matrix_sparse = anndata.obsp['distances']
-neighbor_indices = distance_matrix_sparse.indices.reshape(anndata.n_obs, 16)\
+neighbor_indices = distance_matrix_sparse.indices.reshape(obs, 16)\
     .astype(np.int64)
 remove_self_neighbors(neighbor_indices, num_threads=1)
 neighbor_indices = neighbor_indices[:, 1:]
@@ -153,9 +153,9 @@ with timers('Clustering (3 resolutions)'):
 print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
-data.obsm['distances']=data.obsp['distances']
+data.obsm['distances']=data.obsp['distances'].reshape(obs,16)
 with timers('Embedding'):
-    data = data.embed(PC_key='X_pca')
+    data = data.embed()
 
 with timers('Plot embeddings'):
     data.plot_embedding(
