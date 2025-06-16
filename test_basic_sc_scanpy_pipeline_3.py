@@ -138,7 +138,7 @@ with timers('Neighbor graph'):
     sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=21)
 obs=anndata.n_obs
 distance_matrix_sparse = anndata.obsp['distances']
-neighbor_indices = distance_matrix_sparse.indices.reshape(obs, 20)\
+neighbor_indices = distance_matrix_sparse.indices.reshape(obs, 22)\
     .astype(np.int64)
 remove_self_neighbors(neighbor_indices, num_threads=os.cpu_count())
 neighbor_indices = neighbor_indices[:, 1:]
