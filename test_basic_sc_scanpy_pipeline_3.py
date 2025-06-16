@@ -135,11 +135,10 @@ with timers('PCA'):
 anndata = data.to_scanpy()
 
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=15)
+    sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=21)
 obs=anndata.n_obs
 distance_matrix_sparse = anndata.obsp['distances']
-n_neighbors = anndata.uns['neighbors']['params']['n_neighbors'] # A robust way to get 15
-neighbor_indices = distance_matrix_sparse.indices.reshape(obs, n_neighbors)
+neighbor_indices = anndata.uns['neighbors']['indices']
 neighbor_indices = neighbor_indices[:, 1:]
 anndata.obsm['neighbors'] = neighbor_indices.astype(np.uint32)
 data=SingleCell(anndata)
@@ -154,7 +153,7 @@ print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
 data.obsm['distances']=data.obsp['distances'].toarray().reshape(obs,obs)
 with timers('Embedding'):
-    data = data.embed(num_threads = 1, num_extra_neighbors=6)
+    data = data.embed(num_threads = 1)
 
 with timers('Plot embeddings'):
     data.plot_embedding(
