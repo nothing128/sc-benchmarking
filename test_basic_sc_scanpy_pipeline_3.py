@@ -160,7 +160,7 @@ with timers('Embedding'):
 
 with timers('Plot embeddings'):
     data.plot_embedding(
-        'subclass', f'{work_dir}/figures/sc_embedding_cluster_{size}_pipeline_3.png')
+        'subclass', f'{work_dir}/figures/combined_sc_scanpy_embedding_cluster_{size}_pipeline_3.png')
 
 with timers('Find markers'):
     markers = data.find_markers('cluster_0')

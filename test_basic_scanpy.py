@@ -65,7 +65,7 @@ print(f'leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}')
 print(f'leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}')
 
 with timers('Plot embeddings'):
-    sc.pl.umap(data, color=['leiden_res_1.00'])
+    sc.pl.umap(data, color='subclass')
     plt.savefig(
         f'{work_dir}/figures/scanpy_embedding_cluster_{size}.png',
         dpi=300,
