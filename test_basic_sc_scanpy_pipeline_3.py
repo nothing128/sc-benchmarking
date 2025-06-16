@@ -140,7 +140,7 @@ obs=anndata.n_obs
 distance_matrix_sparse = anndata.obsp['distances']
 neighbor_indices = distance_matrix_sparse.indices.reshape(obs, 16)\
     .astype(np.int64)
-remove_self_neighbors(neighbor_indices, num_threads=1)
+remove_self_neighbors(neighbor_indices, num_threads=os.cpu_count())
 neighbor_indices = neighbor_indices[:, 1:]
 anndata.obsm['neighbors'] = neighbor_indices.astype(np.uint32)
 data=SingleCell(anndata)
@@ -153,7 +153,7 @@ with timers('Clustering (3 resolutions)'):
 print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
-data.obsm['distances']=data.obsp['distances'].reshape(obs,16)
+data.obsm['distances']=np.array(data.obsp['distances'])
 with timers('Embedding'):
     data = data.embed()
 
