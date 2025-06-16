@@ -135,9 +135,8 @@ with timers('PCA'):
 anndata = data.to_scanpy()
 
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata, n_neighbors=15)
+    sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=15)
 
-sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=15)
 distance_matrix_sparse = anndata.obsp['distances']
 neighbor_indices = distance_matrix_sparse.indices.reshape(anndata.n_obs, 16)\
     .astype(np.int64)
