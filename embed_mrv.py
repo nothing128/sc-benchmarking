@@ -52,11 +52,13 @@ data = SingleCell('single-cell/SEAAD/SEAAD_raw_20K.h5ad')\
 
 sc.pp.neighbors(data, use_rep='PCs', n_neighbors=15)
 distance_matrix_sparse = data.obsp['distances']
-neighbor_indices = distance_matrix_sparse.indices.reshape(data.n_obs, 16)\
+obs= data.n_obs
+neighbor_indices = distance_matrix_sparse.indices.reshape(obs, 16)\
     .astype(np.int64)
 remove_self_neighbors(neighbor_indices, num_threads=1)
 neighbor_indices = neighbor_indices[:, 1:]
 data.obsm['neighbors'] = neighbor_indices
 data.obsm['neighbors'] = neighbor_indices.astype(np.uint32)
+data.obsm['distances']=data.obsp['distances'].toarray().reshape(obs,obs)
 data=SingleCell(data)
 data = data.embed()

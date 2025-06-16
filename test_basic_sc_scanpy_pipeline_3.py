@@ -153,7 +153,7 @@ with timers('Clustering (3 resolutions)'):
 print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
-data.obsm['distances']=np.array(data.obsp['distances'])
+data.obsm['distances']=data.obsp['distances'].toarray().reshape(obs,obs)
 with timers('Embedding'):
     data = data.embed()
 
