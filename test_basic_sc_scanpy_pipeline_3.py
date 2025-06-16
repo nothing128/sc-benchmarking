@@ -135,15 +135,16 @@ with timers('PCA'):
 anndata = data.to_scanpy()
 
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=21)
-obs=anndata.n_obs
-distance_matrix_sparse = anndata.obsp['distances']
-neighbor_indices = distance_matrix_sparse.indices.reshape(obs, 22)\
-    .astype(np.int64)
-remove_self_neighbors(neighbor_indices, num_threads=os.cpu_count())
-neighbor_indices = neighbor_indices[:, 1:]
-anndata.obsm['neighbors'] = neighbor_indices.astype(np.uint32)
-data=SingleCell(anndata)
+    sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=20)
+distance_matrix_sparse = data.obsp['distances']
+obs = data.n_obs
+k = 21 
+
+neighbor_indices = distance_matrix_sparse.indices.reshape(obs, k)
+neighbor_distances = distance_matrix_sparse.data.reshape(obs, k)
+
+data.obsm['neighbors'] = neighbor_indices[:, 1:].astype(np.uint32)
+data.obsm['distances'] = (neighbor_distances[:, 1:]**2).astype(np.float32)
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
         resolution=[1, 0.5, 2],
@@ -155,7 +156,7 @@ print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
 data.obsm['distances']=data.obsp['distances'].toarray().reshape(obs,obs)
 with timers('Embedding'):
-    data = data.embed(num_threads = 1, num_extra_neighbors=6)
+    data = data.embed(num_threads = 1)
 
 with timers('Plot embeddings'):
     data.plot_embedding(
