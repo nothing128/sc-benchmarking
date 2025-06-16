@@ -164,7 +164,7 @@ del data, timers, df
 gc.collect()
 # increments the output csv file to ensure old outputs do not get overwritten
 timers_df = pl.concat(all_timers)
-output = f'{work_dir}/output/test_basic_sc_scanpy_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}.csv'
+output = f'{work_dir}/output/test_basic_sc_scanpy_2_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}.csv'
 timers_df.write_csv(output)
 
 """

@@ -132,10 +132,10 @@ if not subset:
 with timers('PCA'):
     data = data.PCA() 
 
-anndata = data.to_scanpy()
+data = data.to_scanpy()
 
 with timers('Neighbor graph'):
-    sc.pp.neighbors(anndata, use_rep='PCs', n_neighbors=20)
+    sc.pp.neighbors(data, use_rep='PCs', n_neighbors=20)
 distance_matrix_sparse = data.obsp['distances']
 obs = data.n_obs
 k = 21 
@@ -145,6 +145,7 @@ neighbor_distances = distance_matrix_sparse.data.reshape(obs, k)
 
 data.obsm['neighbors'] = neighbor_indices[:, 1:].astype(np.uint32)
 data.obsm['distances'] = (neighbor_distances[:, 1:]**2).astype(np.float32)
+data=SingleCell(data)
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(
         resolution=[1, 0.5, 2],
@@ -154,7 +155,6 @@ with timers('Clustering (3 resolutions)'):
 print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
 print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
 print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
-data.obsm['distances']=data.obsp['distances'].toarray().reshape(obs,obs)
 with timers('Embedding'):
     data = data.embed(num_threads = 1)
 
@@ -189,7 +189,7 @@ del data, timers, df
 gc.collect()
 # increments the output csv file to ensure old outputs do not get overwritten
 timers_df = pl.concat(all_timers)
-output = f'{work_dir}/output/test_basic_sc_scanpy_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}.csv'
+output = f'{work_dir}/output/test_basic_sc_scanpy_3_{size}_{("single_thread" if num_threads == 1  else "multi_thread")}{("_subset" if subset  else "_no_subset")}.csv'
 timers_df.write_csv(output)
 
 """
