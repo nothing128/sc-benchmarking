@@ -70,7 +70,7 @@ result <- data_query@meta.data %>%
   ) %>%
   mutate(percent_correct = (n_correct / n_total) * 100) 
 
-accuracy_path <- paste0("test_transfer_seurat_", size,"_accuracy.csv")
+accuracy_path <- paste0(work_dir,"/output/test_transfer_seurat_", size,"_accuracy.csv")
 write.csv(result, accuracy_path, row.names = FALSE)
 print(result,n = Inf)
 
