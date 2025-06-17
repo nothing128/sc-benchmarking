@@ -53,7 +53,7 @@ timers$with_timer("Transfer labels", {
 
 print("--- Transfer Accuracy ---")
 data_query$prediction.match <- data_query$predicted.id == data_query$subclass
-data_query@meta.data %>%
+result <- data_query@meta.data %>%
   group_by(subclass) %>%
   summarize(
     n_correct = sum(prediction.match),
@@ -68,8 +68,11 @@ data_query@meta.data %>%
       n_total = sum(n_total)
     )
   ) %>%
-  mutate(percent_correct = (n_correct / n_total) * 100) %>%
-  print(n = Inf)
+  mutate(percent_correct = (n_correct / n_total) * 100) 
+
+accuracy_path <- paste0("test_transfer_seurat_", size,"_accuracy.csv")
+write.csv(result, accuracy_path, row.names = FALSE)
+print(result,n = Inf)
 
 timers$print_summary(sort = FALSE)
 
