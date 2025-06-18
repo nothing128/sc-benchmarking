@@ -46,7 +46,7 @@ timers$with_timer("Load data (query)", {
 
 timers$with_timer("Load data (ref)", {
   mat_disk <- open_matrix_10x_hdf5(
-    path = paste0(data_dir, "/SEAAD_raw_", size_ref[size],".h5"))
+    path = paste0(data_dir, "/SEAAD_ref_", size_ref[size],".h5"))
   mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
   file_path = file.path(bpcells_dir, paste0("ref_", size_ref[size]))
   write_matrix_dir(
