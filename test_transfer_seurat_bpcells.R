@@ -12,24 +12,30 @@ args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
 output <- args[2]
 
+scratch_dir <- Sys.getenv("SCRATCH")
+bpcells_dir <- file.path(scratch_dir, "bpcells")
+if (!dir.exists(bpcells_dir)) {
+    dir.create(bpcells_dir, recursive = TRUE)
+}
+
 size_ref = c('1.2M' = '600K', '400K' = '200K', '20K' = '10K')
 
 system_info()
 timers = TimerCollection(silent = TRUE)
 
 # Not timed
-if (file.exists(paste0(data_dir, "/bpcells/", size))) {
-  unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
+if (file.exists(file.path(bpcells_dir, size))) {
+  unlink(file.path(bpcells_dir, size), recursive = TRUE)
 }
-if (file.exists(paste0(data_dir, "/bpcells/ref_", size_ref[size]))) {
-  unlink(paste0(data_dir, "/bpcells/ref_", size_ref[size]), recursive = TRUE)
+if (file.exists(file.path(bpcells_dir, paste0("ref_", size_ref[size])))) {
+  unlink(file.path(bpcells_dir, paste0("ref_", size_ref[size])), recursive = TRUE)
 }
 
 timers$with_timer("Load data (query)", {
   mat_disk <- open_matrix_10x_hdf5(
     path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
   mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-  file_path = paste0(data_dir, "/bpcells/", size)
+  file_path = file.path(bpcells_dir, size)
   write_matrix_dir(
     mat = mat_disk,
     dir = file_path
@@ -40,9 +46,9 @@ timers$with_timer("Load data (query)", {
 
 timers$with_timer("Load data (ref)", {
   mat_disk <- open_matrix_10x_hdf5(
-    path = paste0(data_dir, "/SEAAD_ref_", size_ref[size],".h5"))
+    path = paste0(data_dir, "/SEAAD_raw_", size_ref[size],".h5"))
   mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-  file_path = paste0(data_dir, "/bpcells/ref_", size_ref[size])
+  file_path = file.path(bpcells_dir, paste0("ref_", size_ref[size]))
   write_matrix_dir(
     mat = mat_disk,
     dir = file_path
@@ -106,5 +112,5 @@ timers_df$test <- 'test_transfer_seurat_bpcells'
 timers_df$size <- size
 write.csv(timers_df, output, row.names = FALSE)
 
-unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
-unlink(paste0(data_dir, "/bpcells/ref_", size_ref[size]), recursive = TRUE)
+unlink(file.path(bpcells_dir, size), recursive = TRUE)
+unlink(file.path(bpcells_dir, paste0("ref_", size_ref[size])), recursive = TRUE)

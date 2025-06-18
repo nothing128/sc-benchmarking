@@ -58,8 +58,6 @@ with timers('Neighbor graph'):
     data = data.neighbors()  
     data = data.shared_neighbors()  
 
-# TODO: The number of clusters needs to match across libraries
-
 with timers('Clustering (3 resolutions)'):
     data = data.cluster(resolution=[1, 0.5, 2])
 
@@ -72,10 +70,10 @@ with timers('Embedding'):
 
 with timers('Plot embeddings'):
     data.plot_embedding(
-        "subclass", f'{work_dir}/figures/sc_embedding_cluster_{size}.png')
+        'subclass', f'{work_dir}/figures/sc_embedding_subclass_{size}.png')
 
 with timers('Find markers'):
-    markers = data.find_markers('cluster_0')
+    markers = data.find_markers('subclass')
 
 timers.print_summary(sort=False)
 

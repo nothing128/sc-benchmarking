@@ -70,13 +70,13 @@ timers$with_timer("Embedding", {
 })
 
 timers$with_timer("Plot embeddings", {
-  DimPlot(data, reduction = "umap")
-  ggsave(paste0(work_dir, "/figures/seurat_embedding_cluster_", size, ".png"),
+  DimPlot(data, reduction = "umap", group.by = "subclass")
+  ggsave(paste0(work_dir, "/figures/seurat_embedding_subclass_", size, ".png"),
         dpi = 300, units = "in", width = 10, height = 10)
 })
 
 timers$with_timer("Find markers", {
-  markers <- FindAllMarkers(data, only.pos = TRUE)
+  markers <- FindAllMarkers(data, group.by = "subclass", only.pos = TRUE)
 })
 
 timers$print_summary(sort = FALSE)

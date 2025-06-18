@@ -65,16 +65,16 @@ print(f'leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}')
 print(f'leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}')
 
 with timers('Plot embeddings'):
-    sc.pl.umap(data, color='subclass')
+    sc.pl.umap(data, color=['subclass'])
     plt.savefig(
-        f'{work_dir}/figures/scanpy_embedding_cluster_{size}.png',
+        f'{work_dir}/figures/scanpy_embedding_subclass_{size}.png',
         dpi=300,
         bbox_inches='tight',
         pad_inches='layout',
     )
 
 with timers('Find markers'):
-    sc.tl.rank_genes_groups(data, groupby='leiden_res_1.00', method='wilcoxon')
+    sc.tl.rank_genes_groups(data, groupby='subclass', method='wilcoxon')
 
 timers.print_summary(sort=False)
 
