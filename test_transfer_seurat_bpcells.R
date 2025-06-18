@@ -103,8 +103,8 @@ df = data_query@meta.data %>%
   ) %>%
   mutate(percent_correct = (n_correct / n_total) * 100)
 print(df, n = Inf)
-df.write_csv(f'{work_dir}/output/test_transfer_seurat_bpcells_{size}_accuracy.csv')
-
+accuracy_path <- paste0(work_dir,"/output/test_transfer_seurat_bpcells_", size,"_accuracy.csv")
+write.csv(result, accuracy_path, row.names = FALSE)
 timers$print_summary(sort = FALSE)
 
 timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
