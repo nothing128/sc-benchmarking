@@ -22,6 +22,7 @@ timers = TimerMemoryCollection(silent=True)
 print('--- Params ---')
 print(f'{size=}')
 
+#%% Load data (query)
 with timers('Load data (query)'):
     data_query = sc.read_h5ad(f'{data_dir}/SEAAD_raw_{size}.h5ad')
 
@@ -29,15 +30,18 @@ with timers('Load data (query)'):
 data_query.obs['subclass_orig'] = data_query.obs['subclass']
 data_query.obs = data_query.obs.drop(columns=['subclass'])
 
+#%% Load data (ref)
 with timers('Load data (ref)'):
     data_ref = sc.read_h5ad(f'{data_dir}/SEAAD_ref_{size_ref[size]}.h5ad')
 
+#%% Quality control
 with timers('Quality control'):
     data_query.var['mt'] = data_query.var_names.str.startswith('MT-')
     sc.pp.calculate_qc_metrics(data_query, qc_vars=['mt'], inplace=True, log1p=True)
     sc.pp.filter_cells(data_query, min_genes=100)
     sc.pp.filter_genes(data_query, min_cells=3)
     
+#%% Doublet detection
 with timers('Doublet detection'):
     sc.pp.scrublet(data_query, batch_key='sample')
     data_query = data_query[data_query.obs['predicted_doublet'] == False].copy()
@@ -45,6 +49,7 @@ with timers('Doublet detection'):
 # Not timed
 data_query = data_query[data_query.obs['predicted_doublet'] == False].copy()
 
+#%% Normalization
 with timers('Normalization'):
     sc.pp.normalize_total(data_ref)
     sc.pp.log1p(data_ref)    
@@ -54,6 +59,7 @@ with timers('Normalization'):
 # Note: Highly variable gene selection is not explicitly done in the 
 # scanpy vignette, but the exemplar data are pre-filtered.
 
+#%% Feature selection
 with timers('Feature selection'):
     var_names = data_ref.var_names.intersection(data_query.var_names)
     data_ref = data_ref[:, var_names].copy()
@@ -69,9 +75,11 @@ with timers('Feature selection'):
 sc.pp.scale(data_ref)
 sc.pp.scale(data_query)
 
+#%% PCA
 with timers('PCA'):
     sc.pp.pca(data_ref)
 
+#%% Transfer labels
 with timers('Transfer labels'):
     sc.pp.neighbors(data_ref)
     sc.tl.ingest(data_query, data_ref, obs='subclass', embedding_method='pca')
