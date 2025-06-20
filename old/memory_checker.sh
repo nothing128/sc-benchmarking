@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# unused file
 # --- Configuration for the Wrapper ---
 MONITOR_SCRIPT_PATH="./monitor_mem.sh" # Path to your memory monitoring script
 DEFAULT_MONITOR_INTERVAL=0.1           # Default interval for the monitor
@@ -70,12 +70,6 @@ echo "Wrapper: Starting target command: ${TARGET_COMMAND_WITH_ARGS[*]}"
 "${TARGET_COMMAND_WITH_ARGS[@]}" &
 TARGET_PID=$! # Get the PID of the last backgrounded process
 
-# Brief pause to ensure the process is fully up, though often $! is immediate.
-# This might be needed if the process is extremely short-lived or if monitor_mem.sh
-# has an initial check that might fail if the PID isn't fully registered by the kernel.
-# For most cases, this sleep is not strictly necessary if monitor_mem.sh handles
-# a non-existent PID gracefully on its first check.
-# sleep 0.1
 
 echo "Wrapper: Target command started with PID: $TARGET_PID"
 
