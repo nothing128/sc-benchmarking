@@ -22,33 +22,47 @@ print(f'{size=}, {num_threads=}, {subset=}')
 system_info()
 timers = TimerMemoryCollection(silent=True)
 
+#%% Load data (query)
 with timers('Load data (query)'):
     data_query = SingleCell(
         f'{data_dir}/SEAAD_raw_{size}.h5ad', num_threads=1)
     data_query = data_query.set_num_threads(num_threads)
 
+#%% Load data (ref)
 with timers('Load data (ref)'):
     data_ref = SingleCell(
         f"{data_dir}/SEAAD_ref_{size_ref[size]}.h5ad", num_threads=1)
     data_ref = data_ref.set_num_threads(num_threads)
     
+#%% Quality control
 with timers('Quality control'):
     data_query = data_query.qc(
         subset=subset,
-        remove_doublets=True,
+        remove_doublets=False,
         allow_float=True,
         verbose=False)
+
+#%% Doublet detection
+with timers('Doublet detection'):
+    data_query = data_query.find_doublets(batch_column='sample')
+        
+# Not timed 
+data_query = data_query.filter_obs(pl.col('doublet').not_())
     
+#%% Feature selection
 with timers('Feature selection'):
     data_ref, data_query = data_ref.hvg(data_query)
 
+#%% Normalization
 with timers('Normalization'):
     data_ref = data_ref.normalize()
     data_query = data_query.normalize()
 
+#%% PCA
 with timers('PCA'):
     data_ref, data_query = data_ref.PCA(data_query)
 
+#%% Transfer labels
 with timers('Transfer labels'):
     data_ref, data_query = data_ref.harmonize(
         data_query,

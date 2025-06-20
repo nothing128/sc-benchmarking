@@ -13,7 +13,7 @@ if (is.null(.this_file_path)) .this_file_path <- "."
   mustWork = FALSE
 )
 
-TimerCollection = function(silent = TRUE) {
+TimerMemoryCollection = function(silent = TRUE) {
   env = environment()
   env$timings = list()
   env$delay = 0.15

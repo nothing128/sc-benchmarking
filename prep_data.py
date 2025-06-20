@@ -54,7 +54,10 @@ sc = sc\
             .str.count_matches('4')
             .fill_null(strategy='mean')
             .round()
-            .alias('apoe4_dosage'))\
+            .alias('apoe4_dosage'),
+        pl.col('PMI')
+            .cast(pl.Float64)
+            .alias('pmi'))\
     .rename_obs({
         'exp_component_name': '_index', 'sample_id': 'cell_id', 
         'Donor ID': 'sample',

@@ -14,26 +14,44 @@ output <- args[2]
 size_ref = c('1.2M' = '600K', '400K' = '200K', '20K' = '10K')
 
 system_info()
-timers = TimerCollection(silent = TRUE)
+timers = TimerMemoryCollection(silent = TRUE)
 
+# Load data (query) ####
 timers$with_timer("Load data (query)", {
   data_query <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
 })
 
+# Load data (ref) ####
 timers$with_timer("Load data (ref)", {
   data_ref <- readRDS(paste0(data_dir, "/SEAAD_ref_", size_ref[size], ".rds"))
 })
 
+# Note: Temporaily add QC metrics 
+# Running `prep_data.py` on the new cluster
+# will add these metrics to a v5 seurat object
+
+data_query[["nCount_RNA"]] <- colSums(data_query@assays$RNA@counts)
+data_query[["nFeature_RNA"]] <- colSums(data_query@assays$RNA@counts > 0)
+
+# Quality control ####
+timers$with_timer("Quality control", {
+  data_query[["percent.mt"]] <- PercentageFeatureSet(data_query, pattern = "^MT-")
+  data_query <- subset(data_query, subset = nFeature_RNA > 200 & percent.mt < 5)
+})
+
+# Normalization ####
 timers$with_timer("Normalization", {
   data_ref <- NormalizeData(data_ref)
   data_query <- NormalizeData(data_query)
 })
 
+# Feature selection ####
 timers$with_timer("Feature selection", {
   data_ref <- FindVariableFeatures(data_ref)
   data_query <- FindVariableFeatures(data_query)
 })
 
+# PCA ####
 timers$with_timer("PCA", {
   data_ref <- ScaleData(data_ref)
   data_ref <- RunPCA(data_ref)
@@ -41,6 +59,7 @@ timers$with_timer("PCA", {
   data_query <- RunPCA(data_query)
 })
 
+# Transfer labels ####
 timers$with_timer("Transfer labels", {
   anchors <- FindTransferAnchors(
     reference = data_ref, query = data_query, dims = 1:30,
