@@ -45,11 +45,12 @@ TimerMemoryCollection = function(silent = TRUE) {
       duration = as.numeric(difftime(Sys.time(), start, units = 'secs'))
       processx::run("kill", args = c(as.character(process_pid)))
       stdout_output <- curr_process$read_all_output()
-      con <- textConnection(stdout_output)
+      con <- textConnection(stdout_output) # read stdout
+      # stdout contains 2 comma separated values per row of RSS, %mem
       df <- read.csv(con, header = FALSE, sep = ",", strip.white = TRUE, 
-        col.names = c("Integer", "Percentage"))
+        col.names = c("Integer", "Percentage")) # split numbers and store every value into a matrix
       close(con)
-      peak_mem <- max(df$Integer, na.rm = TRUE)
+      peak_mem <- max(df$Integer, na.rm = TRUE) # find max of memory usage
 
       # Find the largest percentage
       percent <- max(df$Percentage, na.rm = TRUE)

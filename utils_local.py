@@ -50,20 +50,20 @@ class TimerMemoryCollection:
                     time_str = self._format_time(duration)
                     print(f"{message} {status} {time_str}\n")
                 subprocess.run(["kill", str(curr_process.pid)])
-
-                stdout_output = curr_process.communicate()[0]
+                # stdout shows 2 comma separated numbers per row, which are RSS in KiB, and % mem used
+                stdout_output = curr_process.communicate()[0] # index 0 contains stdout
 
                 mat = np.loadtxt(io.StringIO(stdout_output), delimiter=",").astype(
                     float
-                )
-                if mat.ndim == 1:
+                ) # split numbers and store every value into a matrix
+                if mat.ndim == 1: # case where there is only 1 read
                     mat = mat[None, None]
-                max_mat = np.squeeze(np.max(mat, axis=0))
-                curr_process.wait()
+                max_mat = np.squeeze(np.max(mat, axis=0)) # get max values
+                curr_process.wait() # ensure the process is terminatedd
                 curr_process = None
-                self.timings[message] = {
+                self.timings[message] = { # used to create a dataframe
                     "duration": duration,
-                    "memory": np.round(max_mat[0] / 1024 / 1024, 2),
+                    "memory": np.round(max_mat[0] / 1024 / 1024, 2),  # convert to GiB
                     "%mem": np.round(max_mat[1], 1),
                     "aborted": aborted,
                 }
