@@ -3,6 +3,7 @@ import sys
 import polars as pl  # type: ignore
 import scanpy as sc  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
+import os
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = '~/single-cell/SEAAD'
@@ -22,7 +23,7 @@ timers = TimerMemoryCollection(silent=True)
 
 #%% Load data
 with timers('Load data'):
-    data = sc.read_h5ad(f'{data_dir}/SEAAD_raw_{size}.h5ad')
+    data = sc.read_h5ad(f'{os.path.expanduser(data_dir)}/SEAAD_raw_{size}.h5ad')
 
 #%% Quality control
 with timers('Quality control'):
