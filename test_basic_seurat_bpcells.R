@@ -5,21 +5,25 @@ suppressPackageStartupMessages({
 })
 
 work_dir = "projects/sc-benchmarking"
-data_dir = "single-cell/SEAAD"
+data_dir = "~/single-cell/SEAAD"
 source(file.path(work_dir, "utils_local.R"))
 
 args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
 output <- args[2]
 
+scratch_dir <- Sys.getenv("SCRATCH")
+bpcells_dir <- file.path(scratch_dir, "bpcells")
+if (!dir.exists(bpcells_dir)) {
+    dir.create(bpcells_dir, recursive = TRUE)
+}
+
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Note: Loading is much slower from $SCRATCH disk
-
 # Not timed
-if (file.exists(paste0(data_dir, "/bpcells/", size))) {
-  unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
+if (file.exists(file.path(bpcells_dir, size))) {
+  unlink(file.path(bpcells_dir, size), recursive = TRUE)
 }
 
 # Load data ####
