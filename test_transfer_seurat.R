@@ -1,6 +1,7 @@
 suppressPackageStartupMessages({
     library(dplyr)
     library(Seurat)
+    library(DoubletFinder)
 })
 
 work_dir = "projects/sc-benchmarking"
@@ -43,7 +44,7 @@ timers$with_timer("Quality control", {
 timers$with_timer("Doublet detection", {
   # preprocessing for Doublet detection 
   data_query <- NormalizeData(data_query)
-  data <- FindVariableFeatures(data_query)
+  data_query <- FindVariableFeatures(data_query)
   data_query <- ScaleData(data_query)
   data_query <- RunPCA(data_query)
   data_query <- RunUMAP(data_query, dims = 1:10)
