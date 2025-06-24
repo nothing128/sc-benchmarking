@@ -33,7 +33,7 @@ timers$with_timer("Quality control", {
   data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
 })
 
-# Note: No doublet detection offered in Seurat
+# doublet detection (using doubletFinder)
 timers$with_timer("Doublet detection", {
   # preprocessing for Doublet detection 
   data <- NormalizeData(data)
@@ -54,7 +54,6 @@ timers$with_timer("Doublet detection", {
 
   # detection
   data <- doubletFinder(data, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = NULL, sct = FALSE)
-  data <- doubletFinder(data, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi.adj, reuse.pANN = "pANN_0.25_0.09_913", sct = FALSE)
 
 })
 
