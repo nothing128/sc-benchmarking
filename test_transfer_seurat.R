@@ -50,7 +50,7 @@ timers$with_timer("Doublet detection", {
   data_query <- RunUMAP(data_query, dims = 1:10)
   # pK identification (no ground truth)
   sweep.res.data_query <- paramSweep(data_query, PCs = 1:10, sct = FALSE)
-  sweep.stats_dat_querya <- summarizeSweep(sweep.res.data_query, GT = FALSE)
+  sweep.stats_data_query <- summarizeSweep(sweep.res.data_query, GT = FALSE)
   bcmvn <- find.pK(sweep.stats_data_query)
   homotypic.prop <- modelHomotypic(data_query@meta.data$seurat_clusters)
   # Homotypic Doublet Proportion Estimate
