@@ -39,6 +39,34 @@ timers$with_timer("Quality control", {
   data_query <- subset(data_query, subset = nFeature_RNA > 200 & percent.mt < 5)
 })
 
+# doublet detection (using doubletFinder)
+timers$with_timer("Doublet detection", {
+  # preprocessing for Doublet detection 
+  data_query <- NormalizeData(data_query)
+  data <- FindVariableFeatures(data_query)
+  data_query <- ScaleData(data_query)
+  data_query <- RunPCA(data_query)
+  data_query <- RunUMAP(data_query, dims = 1:10)
+  # pK identification (no ground truth)
+  sweep.res.data_query <- paramSweep(data_query, PCs = 1:10, sct = FALSE)
+  sweep.stats_dat_querya <- summarizeSweep(sweep.res.data_query, GT = FALSE)
+  bcmvn <- find.pK(sweep.stats_data_query)
+  homotypic.prop <- modelHomotypic(data_query@meta.data$seurat_clusters)
+  # Homotypic Doublet Proportion Estimate
+  n_cells <- ncol(data_query)
+  doublet_rate <- (n_cells / 1000) * 0.008          
+  nExp_poi <- round(doublet_rate* n_cells)
+  nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+  # detection
+  data_query <- doubletFinder(data_query, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = NULL, sct = FALSE)
+
+})
+
+# remove doublets (not timed)
+df_classification_col <- names(data_query@meta.data)[grepl("DF.classifications", names(data_query@meta.data))]
+data_query <- subset(data_query, subset = !!sym(df_classification_col) == "Singlet")
+
 # Normalization ####
 timers$with_timer("Normalization", {
   data_ref <- NormalizeData(data_ref)
