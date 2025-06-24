@@ -2,6 +2,7 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(dplyr)
   library(Seurat)
+  library(DoubletFinder)
 })  
 
 work_dir = "projects/sc-benchmarking"
