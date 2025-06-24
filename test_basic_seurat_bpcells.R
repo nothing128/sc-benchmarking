@@ -43,10 +43,12 @@ timers$with_timer("Load data", {
   })
 
 # Not timed
-data <- AddMetaData(data, metadata = data.frame(
-  nCount_RNA = colSums(data@assays$RNA@layers$counts),
-  nFeature_RNA = colSums(data@assays$RNA@layers$counts > 0)
-))
+# data <- AddMetaData(data, metadata = data.frame(
+#   nCount_RNA = colSums(data@assays$RNA@layers$counts),
+#   nFeature_RNA = colSums(data@assays$RNA@layers$counts > 0)
+# ))
+data[["nCount_RNA"]] <- colSums(data@assays$RNA@counts)
+data[["nFeature_RNA"]] <- colSums(data@assays$RNA@counts > 0)
 
 # Quality control ####
 timers$with_timer("Quality control", {
