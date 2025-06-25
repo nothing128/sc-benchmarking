@@ -89,7 +89,11 @@ timers$with_timer("Differential expression (DESeq2)", {
 })
 
 timers$print_summary(sort = FALSE)
+timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
+timers_df$test <- 'test_basic_seurat'
+timers_df$size <- size
 
+write.csv(timers_df, output, row.names = FALSE)
 '''
 --- Timing Summary ---
 Load data took 11s 755ms (1.3%) using 0.00 GiB (1.4%)
