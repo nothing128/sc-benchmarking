@@ -69,7 +69,11 @@ with timers('Differential expression'):
         )
 
 timers.print_summary(sort=False)
-
+timers_df = timers.to_dataframe(sort=False, unit='s').with_columns(
+    pl.lit('test_basic_scanpy').alias('test'),
+    pl.lit(size).alias('size'),
+)
+timers_df.write_csv(output)
 '''
 --- Timing Summary ---
 Load data took 588ms 446µs (0.7%) using 0.89 GiB (0.5%)

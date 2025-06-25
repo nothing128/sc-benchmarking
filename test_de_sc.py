@@ -72,6 +72,14 @@ with timers('Differential expression'):
     
 timers.print_summary(sort=False)
 
+df = timers.to_dataframe(sort=False, unit='s').with_columns(
+    pl.lit('test_basic_sc').alias('test'),
+    pl.lit(size).alias('size'),
+    pl.lit(num_threads).alias('num_threads'),
+    pl.lit(subset).alias('subset'),
+)
+df.write_csv(output)
+
 '''
 --- Timing Summary ---
 Load data took 2s 409ms (6.8%) using 1.51 GiB (0.8%)
