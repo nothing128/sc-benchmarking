@@ -12,7 +12,6 @@ args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
 output <- args[2]
 
-size <- "20K"
 
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)

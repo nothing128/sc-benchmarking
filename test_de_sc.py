@@ -14,9 +14,6 @@ subset = sys.argv[2].lower() == 'true'
 size = sys.argv[3]
 output = sys.argv[4]
 
-size = '20K'
-num_threads = -1
-subset = True
 
 print('--- Params ---')
 print(f'{size=}, {num_threads=}, {subset=}')
