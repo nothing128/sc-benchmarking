@@ -7,3 +7,8 @@ Shared memory benchmarking to be added on new cluster
 
 SCRATCH disk not required on new cluster 
 - Update paths 
+
+Add DoubletFinder to seurat bpcells 
+
+Additive timer 
+

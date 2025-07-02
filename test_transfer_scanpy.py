@@ -37,17 +37,19 @@ with timers('Load data (ref)'):
 #%% Quality control
 with timers('Quality control'):
     data_query.var['mt'] = data_query.var_names.str.startswith('MT-')
-    sc.pp.calculate_qc_metrics(data_query, qc_vars=['mt'], inplace=True, log1p=True)
-    sc.pp.filter_cells(data_query, min_genes=100)
-    sc.pp.filter_genes(data_query, min_cells=3)
+    sc.pp.calculate_qc_metrics(
+        data_query, qc_vars=['mt'], log1p=True, inplace=True)
+    sc.pp.filter_cells(data_query, min_genes=100, copy=False)
+    sc.pp.filter_genes(data_query, min_cells=3, copy=False)
     
 #%% Doublet detection
 with timers('Doublet detection'):
-    sc.pp.scrublet(data_query, batch_key='sample')
-    data_query = data_query[data_query.obs['predicted_doublet'] == False].copy()
+    sc.pp.scrublet(data_query, batch_key='sample', copy=False)
 
-# Not timed
-data_query = data_query[data_query.obs['predicted_doublet'] == False].copy()
+#%% Quality control
+with timers('Quality control'):
+    data_query = data_query[
+        data_query.obs['predicted_doublet'] == False].copy()
 
 #%% Normalization
 with timers('Normalization'):

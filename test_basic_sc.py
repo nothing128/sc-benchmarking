@@ -20,7 +20,6 @@ print(f'{size=}, {num_threads=}, {subset=}')
 system_info()
 timers = TimerMemoryCollection(silent=True)
 
-# Note: Loading is much slower from $SCRATCH disk
 # TODO: Temporarily setting `num_threads=1` for loading until shared 
 # memory benchmarking is possible 
 
@@ -32,7 +31,7 @@ with timers('Load data'):
 #%% Quality control
 with timers('Quality control'):
     data = data.qc(
-        subset=subset,
+        subset=False,
         remove_doublets=False,
         allow_float=True,
         verbose=False)
@@ -41,8 +40,11 @@ with timers('Quality control'):
 with timers('Doublet detection'):
     data = data.find_doublets(batch_column='sample')
         
-# Not timed 
-data = data.filter_obs(pl.col('doublet').not_())
+#%% Quality control
+with timers('Quality control'):
+    if subset:
+        data = data.filter_obs(
+            pl.col('doublet').not_() & pl.col('passed_QC'))
 
 #%% Feature selection
 with timers('Feature selection'):
