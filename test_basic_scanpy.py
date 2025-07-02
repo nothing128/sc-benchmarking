@@ -17,8 +17,6 @@ output = sys.argv[2]
 system_info()
 timers = TimerMemoryCollection(silent=True)
 
-# Note: Loading is much slower from $SCRATCH disk
-
 #%% Load data
 with timers('Load data'):
     data = sc.read_h5ad(f'{os.path.expanduser(data_dir)}/SEAAD_raw_{size}.h5ad')

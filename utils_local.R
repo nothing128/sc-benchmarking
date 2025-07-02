@@ -20,11 +20,9 @@ TimerMemoryCollection = function(silent = TRUE) {
   pid = Sys.getpid()
   with_timer = function(message, expr) {
     start = Sys.time()
-    
     if (!silent) {
       cat(paste0(message, '...\n'))
     }
-    
     result = NULL
     aborted = FALSE
     curr_process <- process$new(
@@ -34,9 +32,7 @@ TimerMemoryCollection = function(silent = TRUE) {
       )
     process_pid <- curr_process$get_pid()
     Sys.sleep(env$delay)
-    tryCatch({
-      # write code to start subprocess here with processX
-      
+    tryCatch({      
       result = invisible(eval(substitute(expr), parent.frame()))
     }, error = function(e) {
       aborted = TRUE
@@ -60,8 +56,6 @@ TimerMemoryCollection = function(silent = TRUE) {
         mem_percent = percent,
         aborted = aborted
       )
-      
-      
       if (!silent) {
         time_str = format_time(duration)
         status = if (aborted) 'aborted after' else 'took'
@@ -218,7 +212,6 @@ TimerMemoryCollection = function(silent = TRUE) {
       percent_mem = percent_mem
     )
   }
-  
   structure(list(
     with_timer = with_timer,
     print_summary = print_summary,

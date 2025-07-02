@@ -14,13 +14,13 @@ subset = sys.argv[2].lower() == "true"
 size = sys.argv[3]
 output = sys.argv[4]
 
-# size_ref = {'1.2M': '600K', '400K': '200K', '20K': '10K'}
 size_ref = {'1M': '600K', '400K': '200K', '20K': '10K'}
+
 print('--- Params ---')
 print(f'{size=}, {num_threads=}, {subset=}')
 
 system_info()
-timers = TimerMemoryCollection(silent=True)
+timers = TimerMemoryCollection(silent=False)
 
 #%% Load data (query)
 with timers('Load data (query)'):
@@ -37,7 +37,7 @@ with timers('Load data (ref)'):
 #%% Quality control
 with timers('Quality control'):
     data_query = data_query.qc(
-        subset=subset,
+        subset=False,
         remove_doublets=False,
         allow_float=True,
         verbose=False)
@@ -46,8 +46,11 @@ with timers('Quality control'):
 with timers('Doublet detection'):
     data_query = data_query.find_doublets(batch_column='sample')
         
-# Not timed 
-data_query = data_query.filter_obs(pl.col('doublet').not_())
+#%% Quality control
+with timers('Quality control'):
+    if subset:
+        data_query = data_query.filter_obs(
+            pl.col('doublet').not_() & pl.col('passed_QC'))
     
 #%% Feature selection
 with timers('Feature selection'):

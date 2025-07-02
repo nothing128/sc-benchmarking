@@ -56,6 +56,7 @@ with timers('Quality control (pseudobulk)'):
 # Not timed, temporary fix for `pmi` column
 data = data.with_columns_obs(pl.col('pmi').cast(pl.Float64))
 
+# TODO: check if coefficient and group need to be specified
 #%% Differential expression
 with timers('Differential expression'):
     de = data\
