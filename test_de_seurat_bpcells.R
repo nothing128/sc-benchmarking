@@ -34,7 +34,7 @@ timers$with_timer("Load data", {
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
     mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
 
-    file_path = paste0(bpcells_dir, size)
+    file_path = paste0(bpcells_dir,"/" ,size)
     write_matrix_dir(
       mat = mat_disk,
       dir = file_path
