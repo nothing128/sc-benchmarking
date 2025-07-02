@@ -1,8 +1,8 @@
 import gc
 import sys
 import warnings
-import polars as pl  # type: ignore
-import scanpy as sc  # type: ignore
+import polars as pl  
+import scanpy as sc 
 warnings.filterwarnings('ignore')
 
 work_dir = 'projects/sc-benchmarking'

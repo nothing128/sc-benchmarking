@@ -15,8 +15,6 @@ output <- args[2]
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Note: Loading is much slower from $SCRATCH disk
-
 # Not timed
 if (file.exists(paste0(data_dir, "/bpcells/", size))) {
   unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
@@ -24,24 +22,19 @@ if (file.exists(paste0(data_dir, "/bpcells/", size))) {
 
 # Load data ####
 timers$with_timer("Load data", {
-    mat_disk <- open_matrix_10x_hdf5(
-      path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
-    mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-
-    file_path = paste0(data_dir, "/bpcells/", size)
-    write_matrix_dir(
-      mat = mat_disk,
-      dir = file_path
-    )
-    mat <- open_matrix_dir(dir = file_path)
-    data <- CreateSeuratObject(counts = mat)
-  })
-
-# Not timed
-data <- AddMetaData(data, metadata = data.frame(
-  nCount_RNA = colSums(data@assays$RNA@layers$counts),
-  nFeature_RNA = colSums(data@assays$RNA@layers$counts > 0)
-))
+  mat_disk <- open_matrix_anndata_hdf5(
+    path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
+  mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
+  file_path = paste0(data_dir, "/bpcells/", size)
+  write_matrix_dir(
+    mat = mat_disk,
+    dir = file_path
+  )
+  mat <- open_matrix_dir(dir = file_path)
+  # Custom utility to read obs metadata from h5ad file
+  obs_metadata <- read_h5ad_obs(paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
+  data <- CreateSeuratObject(counts = mat, meta.data = obs_metadata)
+})
 
 # Quality control ####
 timers$with_timer("Quality control", {
@@ -70,16 +63,10 @@ timers$with_timer("PCA", {
   data <- RunPCA(data, features = VariableFeatures(object = data))
 })
 
-# svd <- BPCells::svds(data@assays$RNA@layers$data, k=50)
-# pca <- multiply_cols(svd$v, svd$d)
-# data[["pca"]] <- CreateDimReducObject(embeddings = pca, key = "PC_")
-
 # Neighbor graph ####
 timers$with_timer("Neighbor graph", {
   data = FindNeighbors(data, dims = 1:10)
 })
-
-#TODO: The number of clusters needs to match across libraries
 
 # Clustering (3 resolutions) ####
 timers$with_timer("Clustering (3 resolutions)", {
@@ -87,8 +74,6 @@ timers$with_timer("Clustering (3 resolutions)", {
     data = FindClusters(data, resolution = resolution)
   }
 })
-
-print(paste0('seuratclusters: ', length(unique(data$seurat_clusters))))
 
 # Embedding ####
 timers$with_timer("Embedding", {

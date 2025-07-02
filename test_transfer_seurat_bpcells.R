@@ -42,7 +42,10 @@ timers$with_timer("Load data (query)", {
     dir = file_path
   )
   mat <- open_matrix_dir(dir = file_path)
-  data_query <- CreateSeuratObject(counts = mat)
+  # Custom utility to read obs metadata from h5ad file
+  obs_metadata <- read_h5ad_obs(
+    paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
+  data_query <- CreateSeuratObject(counts = mat, meta.data = obs_metadata)
 })
 
 # Load data (ref) ####
@@ -56,7 +59,10 @@ timers$with_timer("Load data (ref)", {
     dir = file_path
   )
   mat <- open_matrix_dir(dir = file_path)
-  data_ref <- CreateSeuratObject(counts = mat)
+  # Custom utility to read obs metadata from h5ad file
+  obs_metadata <- read_h5ad_obs(
+    paste0(data_dir, "/SEAAD_ref_", size_ref[size],".h5ad"))
+  data_ref <- CreateSeuratObject(counts = mat, meta.data = obs_metadata)
 })
 
 # Quality control ####

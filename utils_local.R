@@ -3,6 +3,7 @@ suppressPackageStartupMessages({
   library(benchmarkme)
   library(pryr)
   library(processx)
+  library(hdf5r)
 })
 
 .this_file_path <- NULL
@@ -41,7 +42,7 @@ TimerMemoryCollection = function(silent = TRUE) {
       duration = as.numeric(difftime(Sys.time(), start, units = 'secs'))
       processx::run("kill", args = c(as.character(process_pid)))
       stdout_output <- curr_process$read_all_output()
-      con <- textConnection(stdout_output)
+      con <- textConnection(stdout_output) 
       df <- read.csv(con, header = FALSE, sep = ",", strip.white = TRUE, 
         col.names = c("Integer", "Percentage"))
       close(con)
@@ -135,7 +136,7 @@ TimerMemoryCollection = function(silent = TRUE) {
       info = env$timings[[msg]]
       duration = info$duration
       percentage = if (total_time > 0) (duration / total_time) * 100 else 0
-      max_mem = info$max_mem/1024/1024
+      max_mem = info$max_mem
       mem_percent = info$mem_percent
 
 
@@ -229,4 +230,32 @@ system_info = function() {
   cat(sprintf('Node: %s\n', Sys.info()['nodename']))
   cat(sprintf('CPU: %s physical cores, %s logical cores\n', cp, cl))
   cat(sprintf('Memory: %.1f GB available / %.1f GB total\n', am, tm))
+}
+
+
+read_h5ad_obs <- function(file_path) {
+  h5_file <- H5File$new(file_path, mode = "r")
+  obs_group <- h5_file[["obs"]]
+  
+  obs_list <- list()
+  for (col_name in list.datasets(obs_group)) {
+    if (col_name != "_index") {
+      obs_list[[col_name]] <- obs_group[[col_name]][]
+    }
+  }
+  
+  if ("__categories" %in% list.groups(obs_group)) {
+    cat_group <- obs_group[["__categories"]]
+    for (cat_col in list.datasets(cat_group)) {
+      codes <- obs_list[[cat_col]]
+      levels <- cat_group[[cat_col]][]
+      obs_list[[cat_col]] <- factor(levels[codes + 1])
+    }
+  }
+  
+  obs_df <- as.data.frame(obs_list)
+  rownames(obs_df) <- obs_group[["_index"]][]
+  
+  h5_file$close()
+  return(obs_df)
 }
