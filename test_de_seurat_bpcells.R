@@ -30,8 +30,8 @@ if (file.exists(file.path(bpcells_dir, size))) {
 
 # Load data ####
 timers$with_timer("Load data", {
-    mat_disk <- open_matrix_anndata_hdf5(
-      path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
+    mat_disk <- open_matrix_10x_hdf5(
+      path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
     mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
 
     file_path = paste0(bpcells_dir,"/" ,size)
@@ -43,6 +43,17 @@ timers$with_timer("Load data", {
     data <- CreateSeuratObject(counts = mat)
   })
 
+data_tmp <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+data <- AddMetaData(
+  object = data, metadata = data_tmp@meta.data[,
+    !colnames(data_tmp@meta.data) %in% colnames(data@meta.data)])
+rm(data_tmp); gc()
+
+# Not timed
+data <- AddMetaData(data, metadata = data.frame(
+  nCount_RNA = colSums(data@assays$RNA@layers$counts),
+  nFeature_RNA = colSums(data@assays$RNA@layers$counts > 0)
+))
 
 # Quality control ####
 timers$with_timer("Quality control", {
