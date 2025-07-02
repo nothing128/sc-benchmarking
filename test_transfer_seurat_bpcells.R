@@ -31,83 +31,55 @@ if (file.exists(file.path(bpcells_dir, paste0("ref_", size_ref[size])))) {
   unlink(file.path(bpcells_dir, paste0("ref_", size_ref[size])), recursive = TRUE)
 }
 
-# # Load data (query) ####
-# timers$with_timer("Load data (query)", {
-#   mat_disk <- open_matrix_10x_hdf5(
-#     path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
-#   mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-#   file_path = file.path(bpcells_dir, size)
-#   write_matrix_dir(
-#     mat = mat_disk,
-#     dir = file_path
-#   )
-#   mat <- open_matrix_dir(dir = file_path)
-#   data_query <- CreateSeuratObject(counts = mat)
-# })
-
-# # Load data (ref) ####
-# timers$with_timer("Load data (ref)", {
-#   mat_disk <- open_matrix_10x_hdf5(
-#     path = paste0(data_dir, "/SEAAD_ref_", size_ref[size],".h5"))
-#   mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-#   file_path = file.path(bpcells_dir, paste0("ref_", size_ref[size]))
-#   write_matrix_dir(
-#     mat = mat_disk,
-#     dir = file_path
-#   )
-#   mat <- open_matrix_dir(dir = file_path)
-#   data_ref <- CreateSeuratObject(counts = mat)
-# })
-
-# # Note: Metadata has to be added manually for BPCells
-# # Not timed (but maybe should be)
-# data_query_tmp <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
-# data_query <- AddMetaData(
-#   object = data_query, metadata = data_query_tmp@meta.data[,
-#     !colnames(data_query_tmp@meta.data) %in% colnames(data_query@meta.data)])
-# rm(data_query_tmp); gc()
-
-# data_ref_tmp <- readRDS(paste0(data_dir, "/SEAAD_ref_", size_ref[size], ".rds"))
-# data_ref <- AddMetaData(
-#   object = data_ref, metadata = data_ref_tmp@meta.data[,
-#     !colnames(data_ref_tmp@meta.data) %in% colnames(data_ref@meta.data)])
-# rm(data_ref_tmp); gc()
-
-# # Not timed
-# data_query <- AddMetaData(data_query, metadata = data.frame(
-#   nCount_RNA = colSums(data_query@assays$RNA@layers$counts),
-#   nFeature_RNA = colSums(data_query@assays$RNA@layers$counts > 0)
-# ))
-
 # Load data (query) ####
 timers$with_timer("Load data (query)", {
-  mat_disk <- open_matrix_anndata_hdf5(
-    path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
-  # mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
+  mat_disk <- open_matrix_10x_hdf5(
+    path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
+  mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
   file_path = file.path(bpcells_dir, size)
   write_matrix_dir(
     mat = mat_disk,
     dir = file_path
   )
   mat <- open_matrix_dir(dir = file_path)
-  metadata <- LoadH5ADobs(path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
-  data_query <- CreateSeuratObject(counts = mat, meta.data=metadata)
+  data_query <- CreateSeuratObject(counts = mat)
 })
 
 # Load data (ref) ####
 timers$with_timer("Load data (ref)", {
-  mat_disk <- open_matrix_anndata_hdf5(
-    path = paste0(data_dir, "/SEAAD_ref_", size_ref[size],".h5ad"))
-  # mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
+  mat_disk <- open_matrix_10x_hdf5(
+    path = paste0(data_dir, "/SEAAD_ref_", size_ref[size],".h5"))
+  mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
   file_path = file.path(bpcells_dir, paste0("ref_", size_ref[size]))
   write_matrix_dir(
     mat = mat_disk,
     dir = file_path
   )
   mat <- open_matrix_dir(dir = file_path)
-  metadata <- LoadH5ADobs(path = paste0(data_dir, "/SEAAD_ref_", size,".h5ad"))
-  data_ref <- CreateSeuratObject(counts = mat, meta.data=metadata)
+  data_ref <- CreateSeuratObject(counts = mat)
 })
+
+# Note: Metadata has to be added manually for BPCells
+# Not timed (but maybe should be)
+data_query_tmp <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+data_query <- AddMetaData(
+  object = data_query, metadata = data_query_tmp@meta.data[,
+    !colnames(data_query_tmp@meta.data) %in% colnames(data_query@meta.data)])
+rm(data_query_tmp); gc()
+
+data_ref_tmp <- readRDS(paste0(data_dir, "/SEAAD_ref_", size_ref[size], ".rds"))
+data_ref <- AddMetaData(
+  object = data_ref, metadata = data_ref_tmp@meta.data[,
+    !colnames(data_ref_tmp@meta.data) %in% colnames(data_ref@meta.data)])
+rm(data_ref_tmp); gc()
+
+# Not timed
+data_query <- AddMetaData(data_query, metadata = data.frame(
+  nCount_RNA = colSums(data_query@assays$RNA@layers$counts),
+  nFeature_RNA = colSums(data_query@assays$RNA@layers$counts > 0)
+))
+
+
 
 
 # Quality control ####
