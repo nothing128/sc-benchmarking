@@ -70,7 +70,7 @@ with timers('Differential expression'):
 timers.print_summary(sort=False)
 
 df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_basic_sc').alias('test'),
+    pl.lit('test_de_sc').alias('test'),
     pl.lit(size).alias('size'),
     pl.lit(num_threads).alias('num_threads'),
     pl.lit(subset).alias('subset'),

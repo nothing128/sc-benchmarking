@@ -2,6 +2,7 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(dplyr)
   library(Seurat)
+  library(BPCells)
 })  
 
 work_dir = "projects/sc-benchmarking"
@@ -13,19 +14,40 @@ size <- args[1]
 output <- args[2]
 
 
+scratch_dir <- Sys.getenv("SCRATCH")
+bpcells_dir <- file.path(scratch_dir, "bpcells")
+if (!dir.exists(bpcells_dir)) {
+    dir.create(bpcells_dir, recursive = TRUE)
+}
+
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Note: Loading is much slower from $SCRATCH disk
+# Not timed
+if (file.exists(file.path(bpcells_dir, size))) {
+  unlink(file.path(bpcells_dir, size), recursive = TRUE)
+}
 
 # Load data ####
 timers$with_timer("Load data", {
-  data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
-})
+    mat_disk <- open_matrix_10x_hdf5(
+      path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
+    mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
+
+    file_path = paste0(bpcells_dir, "/bpcells/", size)
+    write_matrix_dir(
+      mat = mat_disk,
+      dir = file_path
+    )
+    mat <- open_matrix_dir(dir = file_path)
+    data <- CreateSeuratObject(counts = mat)
+  })
 
 # Not timed
-data[["nCount_RNA"]] <- colSums(data@assays$RNA@counts)
-data[["nFeature_RNA"]] <- colSums(data@assays$RNA@counts > 0)
+data <- AddMetaData(data, metadata = data.frame(
+  nCount_RNA = colSums(data@assays$RNA@layers$counts),
+  nFeature_RNA = colSums(data@assays$RNA@layers$counts > 0)
+))
 
 # Quality control ####
 timers$with_timer("Quality control", {
@@ -89,18 +111,7 @@ timers$with_timer("Differential expression (DESeq2)", {
 
 timers$print_summary(sort = FALSE)
 timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
-timers_df$test <- 'test_de_seurat'
+timers_df$test <- 'test_de_seurat_bpcells'
 timers_df$size <- size
 
 write.csv(timers_df, output, row.names = FALSE)
-'''
---- Timing Summary ---
-Load data took 11s 755ms (1.3%) using 0.00 GiB (1.4%)
-Quality control took 5s 785ms (0.6%) using 0.00 GiB (2.6%)
-Normalization took 7s 818ms (0.8%) using 0.00 GiB (2.9%)
-Differential expression (wilcoxon) took 34s 453ms (3.7%) using 0.00 GiB (3.1%)
-Pseudobulk took 8s 14ms (0.9%) using 0.00 GiB (3.5%)
-Differential expression (DESeq2) took 14m 20s (92.7%) using 0.00 GiB (2.8%)
-
-Total time: 15m 28s
-'''
