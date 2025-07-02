@@ -43,6 +43,12 @@ timers$with_timer("Load data", {
     data <- CreateSeuratObject(counts = mat)
   })
 
+data_tmp <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+data <- AddMetaData(
+  object = data, metadata = data_tmp@meta.data[,
+    !colnames(data_tmp@meta.data) %in% colnames(data@meta.data)])
+rm(data_tmp); gc()
+
 # Not timed
 data <- AddMetaData(data, metadata = data.frame(
   nCount_RNA = colSums(data@assays$RNA@layers$counts),
