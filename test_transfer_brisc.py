@@ -1,7 +1,7 @@
 import gc
 import sys
-import polars as pl  # type: ignore
-from single_cell import SingleCell  # type: ignore
+import polars as pl  
+from single_cell import SingleCell 
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = '~/single-cell/SEAAD'

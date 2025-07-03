@@ -16,8 +16,6 @@ output <- args[2]
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Note: Loading is much slower from $SCRATCH disk
-
 # Load data ####
 timers$with_timer("Load data", {
   data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
@@ -92,15 +90,12 @@ timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
 timers_df$test <- 'test_de_seurat'
 timers_df$size <- size
 
-write.csv(timers_df, output, row.names = FALSE)
-'''
---- Timing Summary ---
-Load data took 11s 755ms (1.3%) using 0.00 GiB (1.4%)
-Quality control took 5s 785ms (0.6%) using 0.00 GiB (2.6%)
-Normalization took 7s 818ms (0.8%) using 0.00 GiB (2.9%)
-Differential expression (wilcoxon) took 34s 453ms (3.7%) using 0.00 GiB (3.1%)
-Pseudobulk took 8s 14ms (0.9%) using 0.00 GiB (3.5%)
-Differential expression (DESeq2) took 14m 20s (92.7%) using 0.00 GiB (2.8%)
+timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
+timers_df$test <- 'test_de_seurat'
+timers_df$size <- size
 
-Total time: 15m 28s
-'''
+write.csv(timers_df, output, row.names = FALSE)
+
+rm(data, de, de_list, timers, timers_df)
+gc()
+

@@ -32,8 +32,9 @@ with timers('Quality control'):
 with timers('Doublet detection'):
     sc.pp.scrublet(data, batch_key='sample')
 
-# Not timed
-data = data[data.obs['predicted_doublet'] == False].copy()
+#%% Quality control
+with timers('Quality control'):
+    data = data[data.obs['predicted_doublet'] == False].copy()
 
 #%% Normalization
 with timers('Normalization'):
@@ -58,16 +59,12 @@ with timers('Embedding'):
 
 #%% Clustering (3 resolutions)
 with timers('Clustering (3 resolutions)'):
-    for res in [0.5, 1, 2]:
+    for res in [0.5, 1.0, 2.0]:
         sc.tl.leiden(
             data, 
             flavor='igraph',
             key_added=f'leiden_res_{res:4.2f}', 
             resolution=res)
-
-print(f'leiden_res_0.50: {len(data.obs['leiden_res_0.50'].unique())}')
-print(f'leiden_res_1.00: {len(data.obs['leiden_res_1.00'].unique())}')
-print(f'leiden_res_2.00: {len(data.obs['leiden_res_2.00'].unique())}')
 
 #%% Plot embeddings
 with timers('Plot embeddings'):

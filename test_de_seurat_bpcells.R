@@ -6,13 +6,12 @@ suppressPackageStartupMessages({
 })  
 
 work_dir = "projects/sc-benchmarking"
-data_dir = "~/single-cell/SEAAD"
-source(file.path("utils_local.R"))
+data_dir = "single-cell/SEAAD"
+source(file.path(work_dir, "utils_local.R"))
 
 args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
 output <- args[2]
-
 
 scratch_dir <- Sys.getenv("SCRATCH")
 bpcells_dir <- file.path(scratch_dir, "bpcells")
@@ -30,30 +29,20 @@ if (file.exists(file.path(bpcells_dir, size))) {
 
 # Load data ####
 timers$with_timer("Load data", {
-    mat_disk <- open_matrix_10x_hdf5(
-      path = paste0(data_dir, "/SEAAD_raw_", size,".h5"))
+    mat_disk <- open_matrix_anndata_hdf5(
+      path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
     mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-
-    file_path = paste0(bpcells_dir,"/" ,size)
+    file_path <- paste0(bpcells_dir,"/" ,size)
     write_matrix_dir(
       mat = mat_disk,
       dir = file_path
     )
     mat <- open_matrix_dir(dir = file_path)
-    data <- CreateSeuratObject(counts = mat)
+    # Custom utility to read obs metadata from h5ad file
+    obs_metadata <- read_h5ad_obs(paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
+    data <- CreateSeuratObject(counts = mat, meta.data = obs_metadata)
   })
 
-data_tmp <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
-data <- AddMetaData(
-  object = data, metadata = data_tmp@meta.data[,
-    !colnames(data_tmp@meta.data) %in% colnames(data@meta.data)])
-rm(data_tmp); gc()
-
-# Not timed
-data <- AddMetaData(data, metadata = data.frame(
-  nCount_RNA = colSums(data@assays$RNA@layers$counts),
-  nFeature_RNA = colSums(data@assays$RNA@layers$counts > 0)
-))
 
 # Quality control ####
 timers$with_timer("Quality control", {
@@ -121,3 +110,7 @@ timers_df$test <- 'test_de_seurat_bpcells'
 timers_df$size <- size
 
 write.csv(timers_df, output, row.names = FALSE)
+
+unlink(file.path(bpcells_dir, size), recursive = TRUE)
+rm(data, de, de_list, timers, timers_df, mat, mat_disk, obs_metadata)
+gc()

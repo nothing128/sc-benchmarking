@@ -14,11 +14,12 @@ from utils_local import TimerMemoryCollection, system_info
 size = sys.argv[1]
 output = sys.argv[2]
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 577a4c9005ce7a7b81f250fcadebf13cf09f7987
 system_info()
 timers = TimerMemoryCollection(silent=True)
-
-# Note: Loading is much slower from $SCRATCH disk
 
 #%% Load data
 with timers('Load data'):
@@ -73,6 +74,10 @@ timers_df = timers.to_dataframe(sort=False, unit='s').with_columns(
     pl.lit(size).alias('size'),
 )
 timers_df.write_csv(output)
+
+del data, de, adata_sub, timers, timers_df
+gc.collect()
+
 '''
 --- Timing Summary ---
 Load data took 588ms 446µs (0.7%) using 0.89 GiB (0.5%)

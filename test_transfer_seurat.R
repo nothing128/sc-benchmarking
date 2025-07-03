@@ -12,7 +12,7 @@ args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
 output <- args[2]
 
-size_ref = c('1.2M' = '600K', '400K' = '200K', '20K' = '10K')
+size_ref = c('1M' = '600K', '400K' = '200K', '20K' = '10K')
 
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
@@ -131,3 +131,6 @@ timers_df <- timers$to_dataframe(unit = "s", sort = FALSE) %>%
   )
 
 write.csv(timers_df, output, row.names = FALSE)
+
+rm(data_query, data_ref, anchors, predictions, timers, timers_df)
+gc()
