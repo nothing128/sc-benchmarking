@@ -24,7 +24,7 @@ system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
 # Not timed
-if (file.exists(file.path(bpcells_dir, size))) {
+if (file.exists(file.path(bpcells_dir,"/de/", size))) {
   unlink(file.path(bpcells_dir, size), recursive = TRUE)
 }
 
@@ -33,7 +33,7 @@ timers$with_timer("Load data", {
     mat_disk <- open_matrix_anndata_hdf5(
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
     mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-    file_path <- paste0(bpcells_dir,"/de/" ,size)
+    file_path <- file.path(bpcells_dir,"/de/", size)
     write_matrix_dir(
       mat = mat_disk,
       dir = file_path

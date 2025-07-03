@@ -2,6 +2,7 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(Seurat)
   library(BPCells)
+  library(hdf5r)
 })
 
 work_dir = "projects/sc-benchmarking"
@@ -25,7 +26,7 @@ timers = TimerMemoryCollection(silent = TRUE)
 
 # Not timed
 if (file.exists(file.path(bpcells_dir, size))) {
-  unlink(file.path(bpcells_dir, size), recursive = TRUE)
+  unlink(file.path(bpcells_dir, "/transfer/",size), recursive = TRUE)
 }
 if (file.exists(file.path(bpcells_dir, paste0("ref_", size_ref[size])))) {
   unlink(file.path(bpcells_dir, paste0("ref_", size_ref[size])), recursive = TRUE)
