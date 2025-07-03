@@ -25,7 +25,7 @@ timers = TimerMemoryCollection(silent = TRUE)
 
 # Not timed
 if (file.exists(file.path(bpcells_dir,"/de/", size))) {
-  unlink(file.path(bpcells_dir, size), recursive = TRUE)
+  unlink(file.path(bpcells_dir,"/de/", size), recursive = TRUE)
 }
 
 # Load data ####

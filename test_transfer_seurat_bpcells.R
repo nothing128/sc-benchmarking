@@ -25,7 +25,7 @@ system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
 # Not timed
-if (file.exists(file.path(bpcells_dir, size))) {
+if (file.exists(file.path(bpcells_dir, "/transfer/",size))) {
   unlink(file.path(bpcells_dir, "/transfer/",size), recursive = TRUE)
 }
 if (file.exists(file.path(bpcells_dir, paste0("ref_", size_ref[size])))) {
