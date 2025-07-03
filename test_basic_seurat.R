@@ -15,8 +15,6 @@ output <- args[2]
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Note: Loading is much slower from $SCRATCH disk
-
 # Load data ####
 timers$with_timer("Load data", {
   data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
@@ -58,16 +56,12 @@ timers$with_timer("Neighbor graph", {
   data <- FindNeighbors(data, dims = 1:10)
 })
 
-#TODO: The number of clusters needs to match across libraries
-
 # Clustering (3 resolutions) ####
 timers$with_timer("Clustering (3 resolutions)", {
-  for (resolution in c(0.5, 2, 1)) {
+  for (resolution in c(0.5, 1.0, 2.0)) {
     data <- FindClusters(data, resolution = resolution)
   }
 })
-
-print(paste0('seuratclusters: ', length(unique(data$seurat_clusters))))
 
 # Embedding ####
 timers$with_timer("Embedding", {
@@ -88,7 +82,10 @@ timers$with_timer("Find markers", {
 
 timers$print_summary(sort = FALSE)
 timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
-timers_df$test <- 'test_basic_seurat'
+timers_df$test <- "test_basic_seurat"
 timers_df$size <- size
 
 write.csv(timers_df, output, row.names = FALSE)
+
+rm(data, markers, timers, timers_df)
+gc()

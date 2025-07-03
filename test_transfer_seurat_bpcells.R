@@ -1,7 +1,7 @@
 suppressPackageStartupMessages({
-    library(tidyverse)
-    library(Seurat)
-    library(BPCells)
+  library(tidyverse)
+  library(Seurat)
+  library(BPCells)
 })
 
 work_dir = "projects/sc-benchmarking"
@@ -18,7 +18,7 @@ if (!dir.exists(bpcells_dir)) {
     dir.create(bpcells_dir, recursive = TRUE)
 }
 
-size_ref = c('1.2M' = '600K', '400K' = '200K', '20K' = '10K')
+size_ref = c('1M' = '600K', '400K' = '200K', '20K' = '10K')
 
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
@@ -136,3 +136,7 @@ write.csv(timers_df, output, row.names = FALSE)
 
 unlink(file.path(bpcells_dir, size), recursive = TRUE)
 unlink(file.path(bpcells_dir, paste0("ref_", size_ref[size])), recursive = TRUE)
+
+rm(data_query, data_ref, anchors, predictions, timers, 
+  timers_df, df, mat, mat_disk, obs_metadata)
+gc()

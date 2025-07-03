@@ -1,7 +1,7 @@
 suppressPackageStartupMessages({
-    library(tidyverse)
-    library(BPCells)
-    library(Seurat)
+  library(tidyverse)
+  library(BPCells)
+  library(Seurat)
 })
 
 work_dir = "projects/sc-benchmarking"
@@ -98,4 +98,7 @@ timers_df$test = 'test_basic_seurat_bpcells'
 timers_df$size = size
 
 write.csv(timers_df, output, row.names = FALSE)
+
 unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
+rm(data, markers, timers, timers_df, mat, mat_disk, obs_metadata)
+gc()

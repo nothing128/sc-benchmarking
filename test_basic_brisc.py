@@ -1,7 +1,7 @@
 import gc
 import sys
-import polars as pl  # type: ignore
-from single_cell import SingleCell  # type: ignore
+import polars as pl  
+from single_cell import SingleCell  
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = 'single-cell/SEAAD'
@@ -69,11 +69,7 @@ with timers('Neighbor graph'):
 
 #%% Clustering (3 resolutions)
 with timers('Clustering (3 resolutions)'):
-    data = data.cluster(resolution=[1, 0.5, 2])
-
-print(f'cluster_0: {len(data.obs['cluster_0'].unique())}')
-print(f'cluster_1: {len(data.obs['cluster_1'].unique())}')
-print(f'cluster_2: {len(data.obs['cluster_2'].unique())}')
+    data = data.cluster(resolution=[0.5, 1.0, 2.0])
 
 #%% Embedding
 with timers('Embedding'):
@@ -91,7 +87,7 @@ with timers('Find markers'):
 timers.print_summary(sort=False)
 
 df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_basic_sc').alias('test'),
+    pl.lit('test_basic_brisc').alias('test'),
     pl.lit(size).alias('size'),
     pl.lit(num_threads).alias('num_threads'),
     pl.lit(subset).alias('subset'),

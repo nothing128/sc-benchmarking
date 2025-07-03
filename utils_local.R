@@ -17,8 +17,9 @@ if (is.null(.this_file_path)) .this_file_path <- "."
 TimerMemoryCollection = function(silent = TRUE) {
   env = environment()
   env$timings = list()
-  env$delay = 0.15
+  env$delay = 0.10
   pid = Sys.getpid()
+  
   with_timer = function(message, expr) {
     start = Sys.time()
     if (!silent) {
@@ -48,12 +49,28 @@ TimerMemoryCollection = function(silent = TRUE) {
       close(con)
       peak_mem <- max(df$Integer, na.rm = TRUE)
       percent <- max(df$Percentage, na.rm = TRUE)
-      env$timings[[message]] = list(
-        duration = duration,
-        max_mem= peak_mem/1024/1024,
-        mem_percent = percent,
-        aborted = aborted
-      )
+      
+      new_memory <- peak_mem / 1024 / 1024
+      new_percent <- percent
+      
+      if (message %in% names(env$timings)) {
+        env$timings[[message]]$duration <- 
+          env$timings[[message]]$duration + duration
+        env$timings[[message]]$max_mem <- 
+          max(env$timings[[message]]$max_mem, new_memory)
+        env$timings[[message]]$mem_percent <- 
+          max(env$timings[[message]]$mem_percent, new_percent)
+        env$timings[[message]]$aborted <- 
+          env$timings[[message]]$aborted || aborted
+      } else {
+        env$timings[[message]] = list(
+          duration = duration,
+          max_mem = new_memory,
+          mem_percent = new_percent,
+          aborted = aborted
+        )
+      }
+      
       if (!silent) {
         time_str = format_time(duration)
         status = if (aborted) 'aborted after' else 'took'
@@ -105,14 +122,19 @@ TimerMemoryCollection = function(silent = TRUE) {
         } else {
           value = as.integer((duration / threshold) %% 1000)
         }
-        if (value > 0 || (length(parts) == 0 && threshold == 0.000000001)) {
+        if (value > 0 || 
+            (length(parts) == 0 && threshold == 0.000000001)) {
           parts = c(parts, paste0(value, suffix))
         }
         if (length(parts) == 2) break
       }
     }
     
-    if (length(parts) > 0) paste(parts, collapse = ' ') else 'less than 1ns'
+    if (length(parts) > 0) {
+      paste(parts, collapse = ' ')
+    } else {
+      'less than 1ns'
+    }
   }
   
   print_summary = function(sort = TRUE, unit = NULL) {
@@ -135,15 +157,20 @@ TimerMemoryCollection = function(silent = TRUE) {
     for (msg in items) {
       info = env$timings[[msg]]
       duration = info$duration
-      percentage = if (total_time > 0) (duration / total_time) * 100 else 0
+      percentage = if (total_time > 0) {
+        (duration / total_time) * 100
+      } else {
+        0
+      }
       max_mem = info$max_mem
       mem_percent = info$mem_percent
-
-
       status = if (info$aborted) 'aborted after' else 'took'
       time_str = format_time(duration, unit)
       
-      cat(sprintf('%s %s %s (%.1f%%) using %.2f GiB (%.1f%%)\n', msg, status, time_str, percentage,max_mem,mem_percent))
+      cat(sprintf(
+        '%s %s %s (%.1f%%) using %.2f GiB (%.1f%%)\n',
+        msg, status, time_str, percentage, max_mem, mem_percent
+      ))
     }
     
     cat(sprintf('\nTotal time: %s\n', format_time(total_time, unit)))
@@ -174,7 +201,6 @@ TimerMemoryCollection = function(silent = TRUE) {
     
     ops = items
     durs = sapply(items, function(msg) env$timings[[msg]]$duration)
-
     
     if (!is.null(unit)) {
       durs = switch(unit,
@@ -194,11 +220,18 @@ TimerMemoryCollection = function(silent = TRUE) {
     
     aborts = sapply(items, function(msg) env$timings[[msg]]$aborted)
     pcts = sapply(items, function(msg) {
-      if (total > 0) (env$timings[[msg]]$duration / total) * 100 else 0
+      if (total > 0) {
+        (env$timings[[msg]]$duration / total) * 100
+      } else {
+        0
+      }
     })
     memory = sapply(items, function(msg) env$timings[[msg]]$max_mem)
-    memory_unit = sapply(items, function(msg) {"GiB"})
-    percent_mem = sapply(items, function(msg) env$timings[[msg]]$mem_percent)
+    memory_unit = rep("GiB", length(items))
+    percent_mem = sapply(items, function(msg) {
+      env$timings[[msg]]$mem_percent
+    })
+    
     data.frame(
       operation = ops,
       duration = durs,
@@ -210,6 +243,7 @@ TimerMemoryCollection = function(silent = TRUE) {
       percent_mem = percent_mem
     )
   }
+  
   structure(list(
     with_timer = with_timer,
     print_summary = print_summary,
@@ -231,7 +265,6 @@ system_info = function() {
   cat(sprintf('CPU: %s physical cores, %s logical cores\n', cp, cl))
   cat(sprintf('Memory: %.1f GB available / %.1f GB total\n', am, tm))
 }
-
 
 read_h5ad_obs <- function(file_path) {
   h5_file <- H5File$new(file_path, mode = "r")

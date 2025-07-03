@@ -5,15 +5,16 @@ import socket
 import subprocess
 import time
 import numpy as np
-import polars as pl  
+import polars as pl
 import psutil
 from contextlib import contextmanager
 from timeit import default_timer
 
-delay = 0.1
+delay = 0.10
 
 _SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 _MONITOR_MEM_SH_PATH = os.path.join(_SCRIPT_DIR, "monitor_mem.sh")
+
 
 class TimerMemoryCollection:
     def __init__(self, silent=True):
@@ -50,23 +51,38 @@ class TimerMemoryCollection:
                     time_str = self._format_time(duration)
                     print(f"{message} {status} {time_str}\n")
                 subprocess.run(["kill", str(curr_process.pid)])
-                # stdout shows 2 comma separated numbers per row, which are RSS in KiB, and % mem used
-                stdout_output = curr_process.communicate()[0] # index 0 contains stdout
+                stdout_output = curr_process.communicate()[0]
 
-                mat = np.loadtxt(io.StringIO(stdout_output), delimiter=",").astype(
-                    float
-                ) # split numbers and store every value into a matrix
-                if mat.ndim == 1: # case where there is only 1 read
+                mat = np.loadtxt(
+                    io.StringIO(stdout_output), delimiter=","
+                ).astype(float)
+                if mat.ndim == 1:
                     mat = mat[None, None]
-                max_mat = np.squeeze(np.max(mat, axis=0)) # get max values
-                curr_process.wait() # ensure the process is terminatedd
+                max_mat = np.squeeze(np.max(mat, axis=0))
+                curr_process.wait()
                 curr_process = None
-                self.timings[message] = { # used to create a dataframe
-                    "duration": duration,
-                    "memory": np.round(max_mat[0] / 1024 / 1024, 2),  # convert to GiB
-                    "%mem": np.round(max_mat[1], 1),
-                    "aborted": aborted,
-                }
+
+                new_memory = np.round(max_mat[0] / 1024 / 1024, 2)
+                new_percent_mem = np.round(max_mat[1], 1)
+
+                if message in self.timings:
+                    self.timings[message]["duration"] += duration
+                    self.timings[message]["memory"] = max(
+                        self.timings[message]["memory"], new_memory
+                    )
+                    self.timings[message]["%mem"] = max(
+                        self.timings[message]["%mem"], new_percent_mem
+                    )
+                    self.timings[message]["aborted"] = (
+                        self.timings[message]["aborted"] or aborted
+                    )
+                else:
+                    self.timings[message] = {
+                        "duration": duration,
+                        "memory": new_memory,
+                        "%mem": new_percent_mem,
+                        "aborted": aborted,
+                    }
                 gc.collect()
 
         return timer()
@@ -75,8 +91,8 @@ class TimerMemoryCollection:
         print("\n--- Timing Summary ---")
         if sort:
             timings_items = sorted(
-                self.timings.items(), 
-                key=lambda x: x[1]["duration"], 
+                self.timings.items(),
+                key=lambda x: x[1]["duration"],
                 reverse=True
             )
         else:
@@ -90,8 +106,8 @@ class TimerMemoryCollection:
             status = "aborted after" if info["aborted"] else "took"
             time_str = self._format_time(duration, unit)
             print(
-                f'{message} {status} {time_str} ({percentage:.1f}%) using {memory} GiB '
-                f'({info["%mem"]}%)'
+                f'{message} {status} {time_str} ({percentage:.1f}%) '
+                f'using {memory} GiB ({info["%mem"]}%)'
             )
         print(f"\nTotal time: {self._format_time(total_time, unit)}")
 
@@ -127,7 +143,9 @@ class TimerMemoryCollection:
         ]
         parts = []
         for threshold, suffix in units:
-            if duration >= threshold or (not parts and threshold == 0.000000001):
+            if duration >= threshold or (
+                not parts and threshold == 0.000000001
+            ):
                 if threshold >= 1:
                     value = int((duration // threshold))
                     duration %= threshold
@@ -160,8 +178,8 @@ class TimerMemoryCollection:
 
         items = (
             sorted(
-                self.timings.items(), 
-                key=lambda x: x[1]["duration"], 
+                self.timings.items(),
+                key=lambda x: x[1]["duration"],
                 reverse=True
             )
             if sort
@@ -193,7 +211,9 @@ class TimerMemoryCollection:
                 ops.append(msg)
                 durs.append(info["duration"] * conversion)
                 aborts.append(info["aborted"])
-                pcts.append((info["duration"] / total) * 100 if total > 0 else 0)
+                pcts.append(
+                    (info["duration"] / total) * 100 if total > 0 else 0
+                )
                 memory.append((info["memory"]))
                 memory_unit.append("GiB")
                 percent_mem.append((info["%mem"]))
@@ -202,7 +222,9 @@ class TimerMemoryCollection:
                 ops.append(msg)
                 durs.append(info["duration"])
                 aborts.append(info["aborted"])
-                pcts.append((info["duration"] / total) * 100 if total > 0 else 0)
+                pcts.append(
+                    (info["duration"] / total) * 100 if total > 0 else 0
+                )
                 memory.append((info["memory"]))
                 memory_unit.append("GiB")
                 percent_mem.append((info["%mem"]))
@@ -219,6 +241,7 @@ class TimerMemoryCollection:
                 "percent_mem": percent_mem,
             }
         )
+
 
 def system_info():
     hostname = socket.gethostname()

@@ -1,16 +1,15 @@
 #!/bin/bash
 
-# --- Configuration ---
-DEFAULT_INTERVAL=0.25       # seconds
-DEFAULT_LOG_FILE="memory_monitor.log"
-MONITOR_PID_FILE="/tmp/memory_monitor_script.pid" # PID of this monitoring script
+# Configuration
+DEFAULT_INTERVAL=0.25
+MONITOR_PID_FILE="/tmp/memory_monitor_script.pid"
 
-# --- Helper Functions ---
+# Helper Functions
 usage() {
-    echo "Usage: $0 -p <PID_to_monitor> [-i <interval_seconds>] [-o <output_log_file>]"
+    echo "Usage: $0 -p <PID_to_monitor> [-i <interval_seconds>]"
     echo ""
     echo "Examples:"
-    echo "  $0 -p 12345 -i 10 -o my_process_mem.log  (Monitor PID 12345 every 10s)"
+    echo "  $0 -p 12345 -i 10  (Monitor PID 12345 every 10s)"
     echo ""
     echo "To run in the background: $0 -p <PID> &"
     echo "To stop a backgrounded monitor: kill \$(cat ${MONITOR_PID_FILE})"
@@ -22,7 +21,7 @@ cleanup() {
     exit 0
 }
 
-# --- Argument Parsing ---
+# Argument Parsing
 TARGET_PID=""
 INTERVAL="$DEFAULT_INTERVAL"
 
@@ -41,8 +40,7 @@ if [ -z "$TARGET_PID" ]; then
     usage
 fi
 
-
-# --- Main Logic ---
+# Main Logic
 
 # Check if target PID exists initially
 if ! ps -p "$TARGET_PID" > /dev/null; then
@@ -50,9 +48,9 @@ if ! ps -p "$TARGET_PID" > /dev/null; then
     exit 1
 fi
 
-# Store the PID of this monitoring script
+# Store the PID of this monitoring script and set up cleanup
 echo $$ > "$MONITOR_PID_FILE"
-trap cleanup SIGINT SIGTERM # Call cleanup on script exit or interruption
+trap cleanup SIGINT SIGTERM
 
 while true; do
     # Check if the target process still exists
@@ -60,50 +58,37 @@ while true; do
         cleanup
     fi
 
-    # Get memory info using ps
-    # rss: Resident Set Size (physical memory, usually in KB)
-    # %mem: Percentage of physical memory used
+    # Parse /proc/$TARGET_PID/status for memory components
     if [ -f "/proc/$TARGET_PID/status" ]; then
-        # Use awk to parse /proc/$TARGET_PID/status
-        # RssAnon, RssFile, RssShmem are in KiB.
         PROC_MEM_INFO=$(awk '
             BEGIN {
-                rss_anon=0; rss_file=0; rss_shmem=0; # Initialize to 0 in case some are not present
+                rss_anon=0; rss_file=0; rss_shmem=0;
             }
             /^RssAnon:/ {rss_anon=$2}
             /^RssFile:/ {rss_file=$2}
             /^RssShmem:/ {rss_shmem=$2}
             END {
                 rss_sum = rss_anon + rss_file + rss_shmem;
-                # Output: Calculated_RSS_Sum
                 print rss_sum;
             }
-        ' "/proc/$TARGET_PID/status" 2>/dev/null) # Redirect stderr for race conditions
+        ' "/proc/$TARGET_PID/status" 2>/dev/null)
 
         if [ -n "$PROC_MEM_INFO" ]; then
-            # Read the parsed values into separate variables
             read -r P_RSS_SUM<<< "$PROC_MEM_INFO"
 
-            # Calculate %MEM manually
-            # Get total system memory in KiB
+            # Calculate memory percentage
             TOTAL_MEM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
-            PERCENT_MEM="0.0" # Default
+            PERCENT_MEM="0.0"
             if [ "$TOTAL_MEM_KB" -gt 0 ] && [ "$P_RSS_SUM" -gt 0 ]; then
-                # Use awk for floating point division
-                PERCENT_MEM=$(awk -v rss="$P_RSS_SUM" -v total="$TOTAL_MEM_KB" 'BEGIN {printf "%.1f", (rss/total)*100}')
+                PERCENT_MEM=$(awk -v rss="$P_RSS_SUM" -v total="$TOTAL_MEM_KB" 'BEGIN {printf "%.2f", (rss/total)*100}')
             fi
 
-            # Log: Summed_RSS, %MEM
-            LOG_ENTRY="$P_RSS_SUM, $PERCENT_MEM"
-            echo "$LOG_ENTRY"
-        else
-            :
+            # Output: RSS_in_KiB, Percentage
+            echo "$P_RSS_SUM, $PERCENT_MEM"
         fi
     else
-        break # Exit the loop if the process is gone
+        break
     fi
 
     sleep "$INTERVAL"
 done
-
-# Cleanup is handled by the trap

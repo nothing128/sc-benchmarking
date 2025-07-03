@@ -110,3 +110,7 @@ timers_df$test <- 'test_de_seurat_bpcells'
 timers_df$size <- size
 
 write.csv(timers_df, output, row.names = FALSE)
+
+unlink(file.path(bpcells_dir, size), recursive = TRUE)
+rm(data, de, de_list, timers, timers_df, mat, mat_disk, obs_metadata)
+gc()

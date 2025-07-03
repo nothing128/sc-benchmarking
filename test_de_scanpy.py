@@ -13,12 +13,8 @@ from utils_local import TimerMemoryCollection, system_info
 size = sys.argv[1]
 output = sys.argv[2]
 
-size = "20K"
-
 system_info()
 timers = TimerMemoryCollection(silent=True)
-
-# Note: Loading is much slower from $SCRATCH disk
 
 #%% Load data
 with timers('Load data'):
@@ -68,6 +64,15 @@ with timers('Differential expression'):
         )
 
 timers.print_summary(sort=False)
+
+timers_df = timers.to_dataframe(sort=False, unit='s').with_columns(
+    pl.lit('test_de_scanpy').alias('test'),
+    pl.lit(size).alias('size'),
+)
+timers_df.write_csv(output)
+
+del data, de, adata_sub, timers, timers_df
+gc.collect()
 
 '''
 --- Timing Summary ---
