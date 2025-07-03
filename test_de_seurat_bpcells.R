@@ -3,11 +3,12 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(Seurat)
   library(BPCells)
+  library(hdf5r)
 })  
 
 work_dir = "projects/sc-benchmarking"
-data_dir = "single-cell/SEAAD"
-source(file.path(work_dir, "utils_local.R"))
+data_dir = "~/single-cell/SEAAD"
+source(file.path("utils_local.R"))
 
 args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
@@ -32,7 +33,7 @@ timers$with_timer("Load data", {
     mat_disk <- open_matrix_anndata_hdf5(
       path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
     mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-    file_path <- paste0(bpcells_dir,"/" ,size)
+    file_path <- paste0(bpcells_dir,"/de/" ,size)
     write_matrix_dir(
       mat = mat_disk,
       dir = file_path

@@ -31,7 +31,7 @@ timers$with_timer("Load data", {
   mat_disk <- open_matrix_anndata_hdf5(
     path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
   mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-  file_path = paste0(data_dir, "/bpcells/", size)
+  file_path = paste0(bpcells_dir, "/basic/", size)
   write_matrix_dir(
     mat = mat_disk,
     dir = file_path
