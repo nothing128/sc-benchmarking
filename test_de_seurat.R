@@ -51,19 +51,14 @@ timers$with_timer("Quality control", {
   data <- subset(data, subset = nFeature_RNA > 200 & percent.mt < 5)
 })
 
-# Note: No doublet detection offered in Seurat
-
-# Normalization ####
-timers$with_timer("Normalization", {
-  data <- NormalizeData(
-    data, normalization.method = "LogNormalize", scale.factor = 10000)
-})
+# TODO: Add doublet detection
+# Subset the BPCells matrix to each sample and loop through each sample
 
 # Not timed
 data$ad_dx <- ifelse(data$ad_dx == "1", "AD", "Control")
 
-# Pseudobulk ####
-timers$with_timer("Pseudobulk", {
+# Data transformation (pseudobulk / normalization) ####
+timers$with_timer("Data transformation (pseudobulk / normalization)", {
   data <- AggregateExpression(
     data, 
     assays = "RNA", 
@@ -73,7 +68,7 @@ timers$with_timer("Pseudobulk", {
 })
 
 # Differential expression ####
-timers$with_timer("Differential expression (DESeq2)", {
+timers$with_timer("Differential expression", {
   data$group <- paste(data$subclass, data$ad_dx, sep = "_")
   Idents(data) <- "group"
 
@@ -100,6 +95,13 @@ write.csv(timers_df, output, row.names = FALSE)
 unlink(file.path(bpcells_dir_test, size), recursive = TRUE)
 rm(data, de, de_list, timers, timers_df, mat, mat_disk, obs_metadata)
 gc()
+
+
+# # Normalization ####
+# timers$with_timer("Normalization", {
+#   data <- NormalizeData(
+#     data, normalization.method = "LogNormalize", scale.factor = 10000)
+# })
 
 # # Differential expression ####
 # timers$with_timer("Differential expression (wilcoxon)", {

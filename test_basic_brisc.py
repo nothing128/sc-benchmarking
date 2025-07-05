@@ -58,10 +58,6 @@ with timers('Normalization'):
 with timers('PCA'):
     data = data.PCA()
 
-# Not timed
-if not subset:
-    data = data.filter_obs(pl.col('passed_QC'))
-
 #%% Neighbor graph
 with timers('Nearest neighbors'):
     data = data.neighbors()  
@@ -77,7 +73,7 @@ with timers('Embedding'):
 
 #%% Plot embeddings
 with timers('Plot embedding'):
-    data.plot_embedding(
+    data.plot_embedding(    
         'subclass', f'{work_dir}/figures/sc_embedding_subclass_{size}.png')
 
 #%% Find markers

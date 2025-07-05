@@ -27,8 +27,8 @@ with timers('Load data'):
     data = SingleCell(f'{data_dir}/SEAAD_raw_{size}.h5ad', num_threads=1)
     data = data.set_num_threads(num_threads)
 
-#%% Quality control (single cell)
-with timers('Quality control (single cell)'):
+#%% Quality control
+with timers('Quality control'):
     data = data.qc(
         remove_doublets=False,
         allow_float=True,
@@ -38,12 +38,9 @@ with timers('Quality control (single cell)'):
 with timers('Doublet detection'):
     data = data.find_doublets(batch_column='sample')
 
-#%% Pseudobulk
-with timers('Pseudobulk'):
+#%% Data transformation (pseudobulk / normalization)
+with timers('Data transformation (pseudobulk / normalization)'):
     data = data.pseudobulk('sample', 'subclass')
-
-#%% Quality control (pseudobulk)
-with timers('Quality control (pseudobulk)'):
     data = data.qc('ad_dx', verbose=False)
 
 # Not timed, temporary fix for `pmi` column until `prep_data.py` is run again

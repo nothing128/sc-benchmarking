@@ -1,8 +1,7 @@
 import gc
 import sys
-import polars as pl  # type: ignore
-import scanpy as sc  # type: ignore
-import matplotlib.pyplot as plt  # type: ignore
+import polars as pl
+import scanpy as sc 
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = 'single-cell/SEAAD'
@@ -31,11 +30,12 @@ with timers('Quality control'):
 with timers('Doublet detection'):
     sc.pp.scrublet(data, batch_key='sample')
 
-# Not timed
-data = data[data.obs['predicted_doublet'] == False].copy()
+#%% Quality control
+with timers('Quality control'):
+    data = data[data.obs['predicted_doublet'] == False].copy()
 
-#%% Normalization
-with timers('Normalization'):
+#%% Data transformation (pseudobulk / normalization)
+with timers('Data transformation (pseudobulk / normalization)'):
     sc.pp.normalize_total(data)
     sc.pp.log1p(data)
 
