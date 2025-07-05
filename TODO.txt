@@ -1,6 +1,6 @@
 When `prep_data.py` is run on the new cluster 
 - Seurat objects will be v5 assays by default
-- Seurat objects will store qc metadata 
+- Seurat .rds objects will store qc metadata 
 
 Shared memory benchmarking to be added on new cluster 
 - Set data loading num_threads=-1
@@ -11,4 +11,3 @@ SCRATCH disk not required on new cluster
 Add DoubletFinder to seurat bpcells 
 
 Additive timer 
-
