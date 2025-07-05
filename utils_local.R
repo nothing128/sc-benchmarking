@@ -291,7 +291,13 @@ read_h5ad_obs <- function(file_path) {
   if ("__categories" %in% list.groups(obs_group)) {
     cat_group <- obs_group[["__categories"]]
     for (cat_col in list.datasets(cat_group)) {
-      if (cat_col %in% names(obs_list)) {
+      codes_col_name <- paste0(cat_col, "/codes")
+      if (codes_col_name %in% names(obs_list)) {
+        codes <- obs_list[[codes_col_name]]
+        levels <- cat_group[[cat_col]][]
+        obs_list[[cat_col]] <- factor(levels[codes + 1], levels = levels)
+        obs_list[[codes_col_name]] <- NULL
+      } else if (cat_col %in% names(obs_list)) {
         codes <- obs_list[[cat_col]]
         levels <- cat_group[[cat_col]][]
         obs_list[[cat_col]] <- factor(levels[codes + 1], levels = levels)
