@@ -65,7 +65,8 @@ with timers('Differential expression'):
 timers.print_summary(sort=False)
 
 df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_de_brisc').alias('test'),
+    pl.lit('brisc').alias('library'),
+    pl.lit('de').alias('test'),
     pl.lit(size).alias('size'),
     pl.lit(num_threads).alias('num_threads'),
 )

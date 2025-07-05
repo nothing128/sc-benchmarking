@@ -49,15 +49,15 @@ with timers('PCA'):
     sc.tl.pca(data)
 
 #%% Neighbor graph
-with timers('Neighbor graph'):
+with timers('Nearest neighbors'):
     sc.pp.neighbors(data)
 
 #%% Embedding
 with timers('Embedding'):
     sc.tl.umap(data)
 
-#%% Clustering (3 resolutions)
-with timers('Clustering (3 resolutions)'):
+#%% Clustering (3 res.)
+with timers('Clustering (3 res.)'):
     for res in [0.5, 1.0, 2.0]:
         sc.tl.leiden(
             data, 
@@ -66,7 +66,7 @@ with timers('Clustering (3 resolutions)'):
             resolution=res)
 
 #%% Plot embeddings
-with timers('Plot embeddings'):
+with timers('Plot embedding'):
     sc.pl.umap(data, color=['subclass'])
     plt.savefig(
         f'{work_dir}/figures/scanpy_embedding_subclass_{size}.png',
@@ -82,7 +82,8 @@ with timers('Find markers'):
 timers.print_summary(sort=False)
 
 timers_df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_basic_scanpy').alias('test'),
+    pl.lit('scanpy').alias('library'),
+    pl.lit('basic').alias('test'),
     pl.lit(size).alias('size'),
 )
 timers_df.write_csv(output)

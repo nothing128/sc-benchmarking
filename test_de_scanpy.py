@@ -66,7 +66,8 @@ with timers('Differential expression'):
 timers.print_summary(sort=False)
 
 timers_df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_de_scanpy').alias('test'),
+    pl.lit('scanpy').alias('library'),
+    pl.lit('de').alias('test'),
     pl.lit(size).alias('size'),
 )
 timers_df.write_csv(output)
@@ -74,13 +75,3 @@ timers_df.write_csv(output)
 del data, de, adata_sub, timers, timers_df
 gc.collect()
 
-'''
---- Timing Summary ---
-Load data took 588ms 446µs (0.7%) using 0.89 GiB (0.5%)
-Quality control took 5s 461ms (6.4%) using 2.58 GiB (1.4%)
-Doublet detection took 1m 5s (77.0%) using 2.89 GiB (1.5%)
-Normalization took 497ms 736µs (0.6%) using 2.41 GiB (1.3%)
-Differential expression took 12s 971ms (15.3%) using 2.08 GiB (1.1%)
-
-Total time: 1m 24s
-'''

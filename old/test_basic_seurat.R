@@ -1,8 +1,8 @@
 suppressPackageStartupMessages({
   library(tidyverse)
-  library(BPCells)
+  library(dplyr)
   library(Seurat)
-})
+})  
 
 work_dir = "projects/sc-benchmarking"
 data_dir = "single-cell/SEAAD"
@@ -15,26 +15,14 @@ output <- args[2]
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Not timed
-if (file.exists(paste0(data_dir, "/bpcells/", size))) {
-  unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
-}
-
 # Load data ####
 timers$with_timer("Load data", {
-  mat_disk <- open_matrix_anndata_hdf5(
-    path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
-  mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-  file_path = paste0(data_dir, "/bpcells/", size)
-  write_matrix_dir(
-    mat = mat_disk,
-    dir = file_path
-  )
-  mat <- open_matrix_dir(dir = file_path)
-  # Custom utility to read obs metadata from h5ad file
-  obs_metadata <- read_h5ad_obs(paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
-  data <- CreateSeuratObject(counts = mat, meta.data = obs_metadata)
+  data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
 })
+
+# Not timed
+data[["nCount_RNA"]] <- colSums(data@assays$RNA@counts)
+data[["nFeature_RNA"]] <- colSums(data@assays$RNA@counts > 0)
 
 # Quality control ####
 timers$with_timer("Quality control", {
@@ -53,7 +41,7 @@ timers$with_timer("Normalization", {
 # Feature selection ####
 timers$with_timer("Feature selection", {
   data <- FindVariableFeatures(
-    data, selection.method = "vst", nfeatures = 2000)  
+    data, selection.method = "vst", nfeatures = 2000)
 })
 
 # PCA ####
@@ -65,19 +53,19 @@ timers$with_timer("PCA", {
 
 # Neighbor graph ####
 timers$with_timer("Neighbor graph", {
-  data = FindNeighbors(data, dims = 1:10)
+  data <- FindNeighbors(data, dims = 1:10)
 })
 
 # Clustering (3 resolutions) ####
 timers$with_timer("Clustering (3 resolutions)", {
-  for (resolution in c(0.5, 2, 1)) {
-    data = FindClusters(data, resolution = resolution)
+  for (resolution in c(0.5, 1.0, 2.0)) {
+    data <- FindClusters(data, resolution = resolution)
   }
 })
 
 # Embedding ####
 timers$with_timer("Embedding", {
-  data = RunUMAP(data, dims = 1:10)
+  data <- RunUMAP(data, dims = 1:10)
 })
 
 # Plot embeddings ####
@@ -89,16 +77,16 @@ timers$with_timer("Plot embeddings", {
 
 # Find markers ####
 timers$with_timer("Find markers", {
-  markers = FindAllMarkers(data, group.by = "subclass", only.pos = TRUE)
+  markers <- FindAllMarkers(data, group.by = "subclass", only.pos = TRUE)
 })
 
 timers$print_summary(sort = FALSE)
-timers_df = timers$to_dataframe(unit = "s", sort = FALSE)
-timers_df$test = 'test_basic_seurat_bpcells'
-timers_df$size = size
+timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
+timers_df$library <- "Seurat-BPCells"
+timers_df$test <- "basic"
+timers_df$size <- size
 
 write.csv(timers_df, output, row.names = FALSE)
 
-unlink(paste0(data_dir, "/bpcells/", size), recursive = TRUE)
-rm(data, markers, timers, timers_df, mat, mat_disk, obs_metadata)
+rm(data, markers, timers, timers_df)
 gc()

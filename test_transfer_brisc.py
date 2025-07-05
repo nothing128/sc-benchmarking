@@ -93,7 +93,8 @@ with pl.Config(tbl_rows=-1):
 timers.print_summary(sort=False)
 
 df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_transfer_sc').alias('test'),
+    pl.lit('brisc').alias('library'),
+    pl.lit('transfer').alias('test'),
     pl.lit(size).alias('size'),
     pl.lit(num_threads).alias('num_threads'),
     pl.lit(subset).alias('subset'),

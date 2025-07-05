@@ -270,24 +270,37 @@ read_h5ad_obs <- function(file_path) {
   h5_file <- H5File$new(file_path, mode = "r")
   obs_group <- h5_file[["obs"]]
   
+  if (!"_index" %in% list.datasets(obs_group)) {
+    h5_file$close()
+    stop("'_index' dataset not found in '/obs' group.")
+  }
+  
+  index <- obs_group[["_index"]][]
+  n_obs <- length(index)
+  
   obs_list <- list()
   for (col_name in list.datasets(obs_group)) {
     if (col_name != "_index") {
-      obs_list[[col_name]] <- obs_group[[col_name]][]
+      dataset <- obs_group[[col_name]]
+      if (is.null(dataset$dims) || dataset$dims == n_obs) {
+        obs_list[[col_name]] <- dataset[]
+      }
     }
   }
   
   if ("__categories" %in% list.groups(obs_group)) {
     cat_group <- obs_group[["__categories"]]
     for (cat_col in list.datasets(cat_group)) {
-      codes <- obs_list[[cat_col]]
-      levels <- cat_group[[cat_col]][]
-      obs_list[[cat_col]] <- factor(levels[codes + 1])
+      if (cat_col %in% names(obs_list)) {
+        codes <- obs_list[[cat_col]]
+        levels <- cat_group[[cat_col]][]
+        obs_list[[cat_col]] <- factor(levels[codes + 1], levels = levels)
+      }
     }
   }
   
-  obs_df <- as.data.frame(obs_list)
-  rownames(obs_df) <- obs_group[["_index"]][]
+  obs_df <- as.data.frame(obs_list, check.names = FALSE)
+  rownames(obs_df) <- index
   
   h5_file$close()
   return(obs_df)
