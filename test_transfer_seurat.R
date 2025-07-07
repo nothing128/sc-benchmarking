@@ -1,13 +1,7 @@
 suppressPackageStartupMessages({
-<<<<<<< HEAD
-    library(dplyr)
-    library(Seurat)
-    library(DoubletFinder)
-=======
   library(tidyverse)
   library(Seurat)
   library(BPCells)
->>>>>>> 477e7cfb0cb6f0253d124874bf13f7e15b546892
 })
 
 work_dir = "projects/sc-benchmarking"
