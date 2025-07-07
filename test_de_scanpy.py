@@ -2,6 +2,7 @@ import gc
 import sys
 import polars as pl
 import scanpy as sc 
+import os
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = '~/single-cell/SEAAD'

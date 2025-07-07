@@ -49,32 +49,32 @@ timers$with_timer("Quality control", {
 })
 
 # doublet detection (using doubletFinder)
-timers$with_timer("Doublet detection", {
-  # preprocessing for Doublet detection 
-  data <- NormalizeData(data)
-  data <- FindVariableFeatures(data)
-  data <- ScaleData(data)
-  data <- RunPCA(data)
-  data <- RunUMAP(data, dims = 1:10)
-  # pK identification (no ground truth)
-  sweep.res.data <- paramSweep(data, PCs = 1:10, sct = FALSE)
-  sweep.stats_data <- summarizeSweep(sweep.res.data, GT = FALSE)
-  bcmvn <- find.pK(sweep.stats_data)
-  homotypic.prop <- modelHomotypic(data@meta.data$seurat_clusters)
-  # Homotypic Doublet Proportion Estimate
-  n_cells <- ncol(data)
-  doublet_rate <- (n_cells / 1000) * 0.008          
-  nExp_poi <- round(doublet_rate* n_cells)
-  nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+# timers$with_timer("Doublet detection", {
+#   # preprocessing for Doublet detection 
+#   data <- NormalizeData(data)
+#   data <- FindVariableFeatures(data)
+#   data <- ScaleData(data)
+#   data <- RunPCA(data)
+#   data <- RunUMAP(data, dims = 1:10)
+#   # pK identification (no ground truth)
+#   sweep.res.data <- paramSweep(data, PCs = 1:10, sct = FALSE)
+#   sweep.stats_data <- summarizeSweep(sweep.res.data, GT = FALSE)
+#   bcmvn <- find.pK(sweep.stats_data)
+#   homotypic.prop <- modelHomotypic(data@meta.data$seurat_clusters)
+#   # Homotypic Doublet Proportion Estimate
+#   n_cells <- ncol(data)
+#   doublet_rate <- (n_cells / 1000) * 0.008          
+#   nExp_poi <- round(doublet_rate* n_cells)
+#   nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
 
-  # detection
-  data <- doubletFinder(data, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = NULL, sct = FALSE)
+#   # detection
+#   data <- doubletFinder(data, PCs = 1:10, pN = 0.25, pK = 0.09, nExp = nExp_poi, reuse.pANN = NULL, sct = FALSE)
 
-})
+# })
 
-# remove doublets (not timed)
-df_classification_col <- names(data@meta.data)[grepl("DF.classifications", names(data@meta.data))]
-data <- subset(data, subset = !!sym(df_classification_col) == "Singlet")
+# # remove doublets (not timed)
+# df_classification_col <- names(data@meta.data)[grepl("DF.classifications", names(data@meta.data))]
+# data <- subset(data, subset = !!sym(df_classification_col) == "Singlet")
 # Normalization ####
 timers$with_timer("Normalization", {
   data <- NormalizeData(

@@ -48,6 +48,8 @@ data = data.with_columns_obs(pl.col('pmi').cast(pl.Float64))
 
 if size == '20K':
     excluded_cell_types = ['L6 IT Car3', 'Sncg']
+else:
+    excluded_cell_types = ['L6 IT Car3', 'Sncg'] 
 
 #%% Differential expression
 with timers('Differential expression'):
