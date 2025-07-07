@@ -106,7 +106,7 @@ df = timers.to_dataframe(sort=False, unit='s').with_columns(
     pl.lit('transfer').alias('test'),
     pl.lit(size).alias('size'),
     pl.lit(subset).alias('subset'),
-    pl.when(pl.col('num_threads') == 1).then(pl.lit('single-threaded'))\
+    pl.when(num_threads == 1).then(pl.lit('single-threaded'))\
         .otherwise(pl.lit('multi-threaded')).alias('num_threads')
 )
 df.write_csv(output)
