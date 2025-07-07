@@ -1,9 +1,7 @@
 import gc
 import sys
-import polars as pl  # type: ignore
-import scanpy as sc  # type: ignore
-import matplotlib.pyplot as plt  # type: ignore
-import os
+import polars as pl
+import scanpy as sc 
 
 work_dir = 'projects/sc-benchmarking'
 data_dir = '~/single-cell/SEAAD'
@@ -32,11 +30,12 @@ with timers('Quality control'):
 with timers('Doublet detection'):
     sc.pp.scrublet(data, batch_key='sample')
 
-# Not timed
-data = data[data.obs['predicted_doublet'] == False].copy()
+#%% Quality control
+with timers('Quality control'):
+    data = data[data.obs['predicted_doublet'] == False].copy()
 
-#%% Normalization
-with timers('Normalization'):
+#%% Data transformation (pseudobulk / normalization)
+with timers('Data transformation (pseudobulk / normalization)'):
     sc.pp.normalize_total(data)
     sc.pp.log1p(data)
 
@@ -66,7 +65,8 @@ with timers('Differential expression'):
 
 timers.print_summary(sort=False)
 timers_df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_de_scanpy').alias('test'),
+    pl.lit('scanpy').alias('library'),
+    pl.lit('de').alias('test'),
     pl.lit(size).alias('size'),
 )
 timers_df.write_csv(output)
@@ -74,13 +74,3 @@ timers_df.write_csv(output)
 del data, de, adata_sub, timers, timers_df
 gc.collect()
 
-'''
---- Timing Summary ---
-Load data took 588ms 446µs (0.7%) using 0.89 GiB (0.5%)
-Quality control took 5s 461ms (6.4%) using 2.58 GiB (1.4%)
-Doublet detection took 1m 5s (77.0%) using 2.89 GiB (1.5%)
-Normalization took 497ms 736µs (0.6%) using 2.41 GiB (1.3%)
-Differential expression took 12s 971ms (15.3%) using 2.08 GiB (1.1%)
-
-Total time: 1m 24s
-'''

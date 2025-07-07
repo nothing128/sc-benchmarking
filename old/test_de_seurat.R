@@ -2,8 +2,6 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(dplyr)
   library(Seurat)
-  library(BPCells)
-  library(hdf5r)
 })  
 
 work_dir = "projects/sc-benchmarking"
@@ -14,36 +12,17 @@ args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
 output <- args[2]
 
-scratch_dir <- Sys.getenv("SCRATCH")
-bpcells_dir <- file.path(scratch_dir, "bpcells")
-if (!dir.exists(bpcells_dir)) {
-    dir.create(bpcells_dir, recursive = TRUE)
-}
-
 system_info()
 timers = TimerMemoryCollection(silent = TRUE)
 
-# Not timed
-if (file.exists(file.path(bpcells_dir,"/de/", size))) {
-  unlink(file.path(bpcells_dir,"/de/", size), recursive = TRUE)
-}
-
 # Load data ####
 timers$with_timer("Load data", {
-    mat_disk <- open_matrix_anndata_hdf5(
-      path = paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
-    mat_disk <- convert_matrix_type(mat_disk, type = "uint32_t")
-    file_path <- file.path(bpcells_dir,"/de/", size)
-    write_matrix_dir(
-      mat = mat_disk,
-      dir = file_path
-    )
-    mat <- open_matrix_dir(dir = file_path)
-    # Custom utility to read obs metadata from h5ad file
-    obs_metadata <- read_h5ad_obs(paste0(data_dir, "/SEAAD_raw_", size,".h5ad"))
-    data <- CreateSeuratObject(counts = mat, meta.data = obs_metadata)
-  })
+  data <- readRDS(paste0(data_dir, "/SEAAD_raw_", size, ".rds"))
+})
 
+# Not timed
+data[["nCount_RNA"]] <- colSums(data@assays$RNA@counts)
+data[["nFeature_RNA"]] <- colSums(data@assays$RNA@counts > 0)
 
 # Quality control ####
 timers$with_timer("Quality control", {
@@ -106,12 +85,13 @@ timers$with_timer("Differential expression (DESeq2)", {
 })
 
 timers$print_summary(sort = FALSE)
+
 timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
-timers_df$test <- 'test_de_seurat_bpcells'
+timers_df$test <- 'test_de_seurat'
 timers_df$size <- size
 
 write.csv(timers_df, output, row.names = FALSE)
 
-unlink(file.path(bpcells_dir, size), recursive = TRUE)
-rm(data, de, de_list, timers, timers_df, mat, mat_disk, obs_metadata)
+rm(data, de, de_list, timers, timers_df)
 gc()
+

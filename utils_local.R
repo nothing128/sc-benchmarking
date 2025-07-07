@@ -269,29 +269,54 @@ system_info = function() {
   cat(sprintf('Memory: %.1f GB available / %.1f GB total\n', am, tm))
 }
 
-read_h5ad_obs <- function(file_path) {
-  h5_file <- H5File$new(file_path, mode = "r")
+read_h5ad_obs <- function(path) {
+  h5_file <- H5File$new(path, mode = "r")
+  on.exit(h5_file$close_all(), add = TRUE)
+
   obs_group <- h5_file[["obs"]]
-  
+
+  index_attr <- obs_group$attr_open("_index")
+  index_col_name <- index_attr$read()
+  index_attr$close()
+
+  index <- obs_group[[index_col_name]][]
+
+  all_obs_items <- obs_group$names
+  data_cols <- setdiff(all_obs_items, c("__categories", index_col_name))
+
   obs_list <- list()
-  for (col_name in list.datasets(obs_group)) {
-    if (col_name != "_index") {
-      obs_list[[col_name]] <- obs_group[[col_name]][]
+
+  if ("__categories" %in% all_obs_items) {
+    categories_group <- obs_group[["__categories"]]
+    category_names <- categories_group$names
+
+    for (col in data_cols) {
+      item <- obs_group[[col]]
+      if (inherits(item, "H5D") && item$dims == length(index)) {
+        if (col %in% category_names) {
+          codes <- item[]
+          levels <- categories_group[[col]][]
+          obs_list[[col]] <- factor(levels[codes + 1], levels = levels)
+        } else {
+          obs_list[[col]] <- item[]
+        }
+      }
+    }
+  } else {
+    for (col in data_cols) {
+      item <- obs_group[[col]]
+      if (inherits(item, "H5Group") && all(c("codes", "categories") %in% item$names)) {
+          codes <- item[["codes"]][]
+          levels <- item[["categories"]][]
+          obs_list[[col]] <- factor(levels[codes + 1], levels = levels)
+      } else if (inherits(item, "H5D") && item$dims == length(index)) {
+          obs_list[[col]] <- item[]
+      }
     }
   }
-  
-  if ("__categories" %in% list.groups(obs_group)) {
-    cat_group <- obs_group[["__categories"]]
-    for (cat_col in list.datasets(cat_group)) {
-      codes <- obs_list[[cat_col]]
-      levels <- cat_group[[cat_col]][]
-      obs_list[[cat_col]] <- factor(levels[codes + 1])
-    }
-  }
-  
-  obs_df <- as.data.frame(obs_list)
-  rownames(obs_df) <- obs_group[["_index"]][]
-  
-  h5_file$close()
+
+  obs_df <- as.data.frame(obs_list, check.names = FALSE)
+  rownames(obs_df) <- index
+
   return(obs_df)
 }

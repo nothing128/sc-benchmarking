@@ -111,7 +111,8 @@ df.write_csv(f'{work_dir}/output/test_transfer_scanpy_{size}_accuracy.csv')
 timers.print_summary(sort=False)
 
 df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_transfer_scanpy').alias('test'),
+    pl.lit('scanpy').alias('library'),
+    pl.lit('transfer').alias('test'),
     pl.lit(size).alias('size'),
 )
 df.write_csv(output)

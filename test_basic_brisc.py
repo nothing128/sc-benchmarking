@@ -58,17 +58,13 @@ with timers('Normalization'):
 with timers('PCA'):
     data = data.PCA()
 
-# Not timed
-if not subset:
-    data = data.filter_obs(pl.col('passed_QC'))
-
 #%% Neighbor graph
-with timers('Neighbor graph'):
+with timers('Nearest neighbors'):
     data = data.neighbors()  
     data = data.shared_neighbors()  
 
-#%% Clustering (3 resolutions)
-with timers('Clustering (3 resolutions)'):
+#%% Clustering (3 res.)
+with timers('Clustering (3 res.)'):
     data = data.cluster(resolution=[0.5, 1.0, 2.0])
 
 #%% Embedding
@@ -76,8 +72,8 @@ with timers('Embedding'):
     data = data.embed()
 
 #%% Plot embeddings
-with timers('Plot embeddings'):
-    data.plot_embedding(
+with timers('Plot embedding'):
+    data.plot_embedding(    
         'subclass', f'{work_dir}/figures/sc_embedding_subclass_{size}.png')
 
 #%% Find markers
@@ -87,10 +83,12 @@ with timers('Find markers'):
 timers.print_summary(sort=False)
 
 df = timers.to_dataframe(sort=False, unit='s').with_columns(
-    pl.lit('test_basic_brisc').alias('test'),
+    pl.lit('brisc').alias('library'),
+    pl.lit('basic').alias('test'),
     pl.lit(size).alias('size'),
-    pl.lit(num_threads).alias('num_threads'),
     pl.lit(subset).alias('subset'),
+    pl.when(pl.col('num_threads') == 1).then('single-threaded')\
+        .otherwise('multi-threaded').alias('num_threads')
 )
 df.write_csv(output)
 
