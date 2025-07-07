@@ -65,7 +65,8 @@ df = timers.to_dataframe(sort=False, unit='s').with_columns(
     pl.lit('brisc').alias('library'),
     pl.lit('de').alias('test'),
     pl.lit(size).alias('size'),
-    pl.lit(num_threads).alias('num_threads'),
+    pl.when(pl.col('num_threads') == 1).then(pl.lit('single-threaded'))\
+        .otherwise(pl.lit('multi-threaded')).alias('num_threads')
 )
 df.write_csv(output)
 

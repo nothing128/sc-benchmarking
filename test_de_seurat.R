@@ -85,13 +85,6 @@ timers$with_timer("Differential expression", {
 })
 
 timers$print_summary(sort = FALSE)
-<<<<<<< HEAD
-timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
-timers_df$test <- 'test_de_seurat'
-timers_df$size <- size
-
-=======
->>>>>>> 477e7cfb0cb6f0253d124874bf13f7e15b546892
 timers_df <- timers$to_dataframe(unit = "s", sort = FALSE)
 timers_df$library <- 'seurat'
 timers_df$test <- 'de'
