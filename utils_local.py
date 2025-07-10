@@ -64,7 +64,7 @@ class TimerMemoryCollection:
                 curr_process = None
 
                 new_memory = np.round(max_mat[0] / 1024 / 1024, 2)
-                new_percent_mem = np.round(max_mat[1], 1)
+                new_percent_mem = np.round(max_mat[1], 2)
 
                 if message in self.timings:
                     self.timings[message]["duration"] += duration
