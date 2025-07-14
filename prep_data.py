@@ -4,6 +4,10 @@ import polars as pl
 from utils import run 
 from single_cell import SingleCell
 
+os.makedirs('sc-benchmarking/figures', exist_ok=True)
+os.makedirs('sc-benchmarking/logs', exist_ok=True)
+os.makedirs('sc-benchmarking/out', exist_ok=True)
+
 # SEAAD 
 # https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html
 
@@ -60,10 +64,8 @@ sc = sc\
             .alias('pmi'))\
     .rename_obs({
         'exp_component_name': '_index', 'sample_id': 'cell_id', 
-        'Donor ID': 'sample',
-        'Continuous Pseudo-progression Score': 'cp_score',
-        'PMI': 'pmi', 'Age at Death': 'age_at_death', 'Sex': 'sex',
-        'Subclass': 'subclass'})\
+        'Donor ID': 'sample', 'Continuous Pseudo-progression Score': 'cp_score',
+        'Age at Death': 'age_at_death', 'Sex': 'sex', 'Subclass': 'subclass'})\
     .select_obs(cols)\
     .filter_obs(pl.all_horizontal(pl.col(cols).is_not_null()))\
     .rename_var({'gene_ids': 'gene_symbol'})\
@@ -102,32 +104,11 @@ sizes = {1200000: '1.2M', 400000: '400K', 20000: '20K'}
 for n, label in sizes.items():
     print(f'Subsampling to {label}')
     sc_sub = sc.subsample_obs(n=n, by_column='subclass', QC_column=None)
-    
     print(f'Saving {label} h5ad')
     sc_sub.save(f'{path}/SEAAD_raw_{label}.h5ad', overwrite=True)
-
-    print(f'Saving {label} h5')
-    sc_sub\
-        .with_columns_obs(
-            pl.col('cell_id').alias('barcodes'))\
-        .with_columns_var(
-            pl.col('gene_symbol').alias('name'),
-            pl.col('gene_symbol').alias('id'),
-            pl.lit('Gene Expression').alias('feature_type'),
-            pl.lit('unknown').alias('genome'))\
-        .save(f'{path}/SEAAD_raw_{label}.h5', overwrite=True)
-
-    print(f'Saving {label} mtx.gz')
-    os.makedirs(f'{path}/SEAAD_raw_{label}', exist_ok=True)
-    sc_sub.save(f'{path}/SEAAD_raw_{label}/matrix.mtx.gz', overwrite=True)
-
-    if label != '1M':
+    if label != '1.2M':
         print(f'Saving {label} rds')
         sc_sub.save(f'{path}/SEAAD_raw_{label}.rds', overwrite=True)
-
-        print(f'Saving {label} h5Seurat')
-        sc_sub.save(f'{path}/SEAAD_raw_{label}.h5Seurat', overwrite=True)
-
     del sc_sub; gc.collect()
 
 del sc; gc.collect()
@@ -184,32 +165,11 @@ sizes = {600000: '600K', 200000: '200K', 10000: '10K'}
 for n, label in sizes.items():
     print(f'Subsampling to {label}')
     sc_sub = sc.subsample_obs(n=n, by_column='subclass', QC_column=None)
-    
     print(f'Saving {label} h5ad')
     sc_sub.save(f'{path}/SEAAD_ref_{label}.h5ad', overwrite=True)
-
-    print(f'Saving {label} h5')
-    sc_sub\
-        .with_columns_obs(
-            pl.col('cell_id').alias('barcodes'))\
-        .with_columns_var(
-            pl.col('gene_symbol').alias('name'),
-            pl.col('gene_symbol').alias('id'),
-            pl.lit('Gene Expression').alias('feature_type'),
-            pl.lit('unknown').alias('genome'))\
-        .save(f'{path}/SEAAD_ref_{label}.h5', overwrite=True)
-
-    print(f'Saving {label} mtx.gz')
-    os.makedirs(f'{path}/SEAAD_ref_{label}', exist_ok=True)
-    sc_sub.save(f'{path}/SEAAD_ref_{label}/matrix.mtx.gz', overwrite=True)
-
     if label != '600K':
         print(f'Saving {label} rds')
         sc_sub.save(f'{path}/SEAAD_ref_{label}.rds', overwrite=True)
-
-        print(f'Saving {label} h5Seurat')
-        sc_sub.save(f'{path}/SEAAD_ref_{label}.h5Seurat', overwrite=True)
-
     del sc_sub; gc.collect()
 
 del sc; gc.collect()
