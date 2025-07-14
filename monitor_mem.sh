@@ -62,6 +62,7 @@ fi
 echo $$ > "$MONITOR_PID_FILE"
 trap cleanup SIGINT SIGTERM # Call cleanup on script exit or interruption
 
+TOTAL_MEM_KB=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
 while true; do
     # Check if the target process still exists. If not, break the loop cleanly.
     if ! ps -p "$TARGET_PID" > /dev/null; then
