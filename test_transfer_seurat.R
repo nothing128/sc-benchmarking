@@ -2,12 +2,11 @@ suppressPackageStartupMessages({
   library(tidyverse)
   library(Seurat)
   library(BPCells)
-  library(DoubletFinder)
 })
 
 work_dir = "projects/sc-benchmarking"
 data_dir = "~/single-cell/SEAAD"
-source("utils_local.R")
+source(file.path("~/sc-benchmarking/utils_local.R"))
 
 args = commandArgs(trailingOnly=TRUE)
 size <- args[1]
