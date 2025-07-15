@@ -2,7 +2,6 @@
 
 # Configuration
 DEFAULT_INTERVAL=0.25
-MONITOR_PID_FILE="/tmp/memory_monitor_script.pid"
 
 # Helper Functions
 usage() {
@@ -12,12 +11,10 @@ usage() {
     echo "  $0 -p 12345 -i 10  (Monitor PID 12345 every 10s)"
     echo ""
     echo "To run in the background: $0 -p <PID> &"
-    echo "To stop a backgrounded monitor: kill \$(cat ${MONITOR_PID_FILE})"
     exit 1
 }
 
 cleanup() {
-    rm -f "$MONITOR_PID_FILE"
     exit 0
 }
 
@@ -59,9 +56,9 @@ if ! ps -p "$TARGET_PID" > /dev/null; then
 fi
 
 # Store the PID of this monitoring script and set up cleanup
-echo $$ > "$MONITOR_PID_FILE"
 trap cleanup SIGINT SIGTERM # Call cleanup on script exit or interruption
-
+MEM_INFO=$(ps -p "$TARGET_PID" -o rss,pmem --no-headers)
+echo "$MEM_INFO"
 TOTAL_MEM_KB=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
 while true; do
     # Check if the target process still exists. If not, break the loop cleanly.
