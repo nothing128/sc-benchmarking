@@ -106,7 +106,7 @@ with pl.Config(tbl_rows=-1):
             pl.when(pl.col("subclass") == "Total").then(1).otherwise(0),
             pl.col("subclass")))
     print(df)
-df.write_csv(f'{work_dir}/output/test_transfer_scanpy_{size}_accuracy.csv')
+df.write_csv(f'output/test_transfer_scanpy_{size}_accuracy.csv')
 
 timers.print_summary(sort=False)
 

@@ -155,7 +155,7 @@ df = data_query@meta.data %>%
   mutate(percent_correct = (n_correct / n_total) * 100)
 print(df, n = Inf)
 
-write.csv(df, file.path(work_dir, "output", paste0(
+write.csv(df, file.path("output", paste0(
   "test_transfer_seurat_bpcells_", size, "_accuracy.csv")), row.names = FALSE)
 
 timers$print_summary(sort = FALSE)

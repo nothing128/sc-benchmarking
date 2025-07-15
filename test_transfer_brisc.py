@@ -96,7 +96,7 @@ with pl.Config(tbl_rows=-1):
     print(accuracy_out)
     thread_mode = "single_thread" if num_threads == 1 else "multi_thread"
     subset_mode = "subset" if subset else "no_subset"
-    output_file = f'{work_dir}/output/test_transfer_sc_{size}_{thread_mode}_{subset_mode}_accuracy.csv'
+    output_file = f'output/test_transfer_sc_{size}_{thread_mode}_{subset_mode}_accuracy.csv'
     accuracy_out.write_csv(output_file)
 
 timers.print_summary(sort=False)

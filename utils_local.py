@@ -62,9 +62,12 @@ class TimerMemoryCollection:
                 max_mat = np.squeeze(np.max(mat, axis=0)) # get max values
                 curr_process.wait() # ensure the process is terminatedd
                 curr_process = None
-
-                new_memory = np.round(max_mat[0] / 1024 / 1024, 2)
-                new_percent_mem = np.round(max_mat[1], 2)
+                if (len(max_mat)==0):
+                    new_memory = 0.00
+                    new_percent_mem = 0.00
+                else:    
+                    new_memory = np.round(max_mat[0] / 1024 / 1024, 2)
+                    new_percent_mem = np.round(max_mat[1], 2)
 
                 if message in self.timings:
                     self.timings[message]["duration"] += duration
