@@ -57,7 +57,7 @@ fi
 
 # Store the PID of this monitoring script and set up cleanup
 trap cleanup SIGINT SIGTERM # Call cleanup on script exit or interruption
-MEM_INFO=$(ps -p "$TARGET_PID" -o rss,pmem --no-headers)
+MEM_INFO=$(ps -p "$TARGET_PID" -o rss,pmem --no-headers | awk '{print $1 "," $2}')
 echo "$MEM_INFO"
 TOTAL_MEM_KB=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
 while true; do
